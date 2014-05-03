@@ -1,0 +1,8 @@
+git:
+notifications:
+  email:
+    - steipete@gmail.com
+language: objective-c
+script:
+- ./.travis/run_tests.sh
+- xcodebuild -project AspectsDemo/AspectsDemo.xcodeproj -scheme AspectsDemo -sdk iphonesimulator ONLY_ACTIVE_ARCH=NO test
