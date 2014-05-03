@@ -137,7 +137,7 @@ Supported iOS & SDK Versions
 
 License
 -------
-MIT licensed, Copyright (c) 2014 Peter Steinberger, steipete@gmail.com, http://twitter.com/steipete
+MIT licensed, Copyright (c) 2014 Peter Steinberger, steipete@gmail.com, [@steipete](http://twitter.com/steipete)
 
 
 Release Notes
