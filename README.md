@@ -42,6 +42,9 @@ Aspects can be used to **dynamically add logging** for debug builds only:
 }];
 ```
 
+It can be used to greatly simply your analytics setup:
+https://github.com/orta/ARAnalytics/pull/74
+
 You can check if methods really are being called in your test cases:
 ``` objc
 - (void)testExample {
@@ -79,8 +82,6 @@ Another convienent use case is adding handlers for classes that you don't own. I
 
 @end
 ```
-
-There are lots of other use cases where AOP can be convenient, like dynamically inserting analytics hooks.
 
 Debugging
 ---------
