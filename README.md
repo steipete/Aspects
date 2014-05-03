@@ -1,5 +1,5 @@
-Aspects
-=======
+Aspects v1.0.0 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects)
+==============
 
 Delightful, simple library for aspect oriented programming by [@steipete](http://twitter.com/steipete).
 
@@ -7,7 +7,7 @@ Delightful, simple library for aspect oriented programming by [@steipete](http:/
 
 Aspects extends NSObject with the following methods:
 
-```objectivec
+``` objc
 - (id)aspect_hookSelector:(SEL)selector
                atPosition:(AspectPosition)injectPosition
                 withBlock:(void (^)(id object, NSArray *arguments))block;
@@ -29,7 +29,7 @@ When to use Aspects
 -------------------
 Aspects makes it really convenient to add blocks of code to a method, and is much simpler to use than regular swizzling. I've written it for use in [PSPDFKit](http://pspdfkit.com) where we required notifications when a view controller is being dismissed modally. This includes UIKit view controllers like `MFMailComposeViewController` or `UIImagePickerController`. Now we could have created subclasses for each of these controllers, but this would be quite a lot of unnecessary code. Aspects gives you a simpler solution:
 
-```objectivec
+``` objc
 @implementation UIViewController (DismissActionHook)
 
 // Will add a dismiss action once the controller gets dismissed.
@@ -58,7 +58,7 @@ Using Aspects with methods with a return type
 
 When you're using Aspects with `AspectPositionInstead`, the last argument of the `arguments` array will be the `NSInvocation` of the original implementation. You can use this invocation to customize the return value:
 
-```objectivec
+``` objc
     [PSPDFDrawView aspect_hookSelector:@selector(shouldProcessTouches:withEvent:) atPosition:AspectPositionInstead withBlock:^(id object, NSArray *arguments) {
         // Call original implementation.
         BOOL processTouches;
@@ -72,6 +72,11 @@ When you're using Aspects with `AspectPositionInstead`, the last argument of the
         }
     }];
 ```
+
+Installation
+------------
+The simplest option is to use `pod "Aspects"`.
+You can also add the two files NSObject+Aspects.h/m. There are no further requirements.
 
 
 Release Notes
