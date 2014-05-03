@@ -14,9 +14,9 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
 
-    [self.window aspect_hookSelector:@selector(makeKeyAndVisible) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
-        NSLog(@"We're about to call -[UIWindow makeKeyAndVisible].");
-    }];
+//    [self.window aspect_hookSelector:@selector(makeKeyAndVisible) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
+//        NSLog(@"We're about to call -[UIWindow makeKeyAndVisible].");
+//    }];
 
     // Override point for customization after application launch.
     self.window.backgroundColor = [UIColor whiteColor];

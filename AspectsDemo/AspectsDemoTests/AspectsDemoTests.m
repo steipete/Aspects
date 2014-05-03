@@ -10,6 +10,8 @@
 #import "NSObject+Aspects.h"
 
 @interface TestClass : NSObject
+@property (nonatomic, copy) NSString *string;
+@property (nonatomic, assign) BOOL kvoTestCalled;
 - (void)testCall;
 - (void)testCallAndExecuteBlock:(dispatch_block_t)block;
 @end
@@ -162,6 +164,59 @@
 
     CGRect rectHooked = [testClass testThatReturnsAStruct];
     XCTAssertTrue(CGRectEqualToRect(rect, rectHooked), @"Must be equal");
+}
+
+- (void)testKVOCoexistance {
+    TestClass *testClass = [TestClass new];
+
+    __block BOOL hookCalled = NO;
+    [testClass aspect_hookSelector:@selector(setString:) atPosition:AspectPositionAfter withBlock:^(id object, NSArray *arguments) {
+        NSLog(@"Aspect hook!");
+        hookCalled = YES;
+    }];
+    [testClass addObserver:self forKeyPath:NSStringFromSelector(@selector(string)) options:0 context:_cmd];
+
+    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must be not set");
+    testClass.string = @"test";
+    XCTAssertTrue(hookCalled, @"Hook must be called");
+    XCTAssertTrue(testClass.kvoTestCalled, @"KVO must work");
+    [testClass removeObserver:self forKeyPath:NSStringFromSelector(@selector(string)) context:_cmd];
+    hookCalled = NO;
+    testClass.kvoTestCalled = NO;
+    testClass.string = @"test2";
+    XCTAssertTrue(hookCalled, @"Hook must be called");
+    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must no longer work");
+}
+
+// TODO: Pre-registeded KVO is currently not working.
+//- (void)testKVOCoexistanceWithPreregisteredKVO {
+//    TestClass *testClass = [TestClass new];
+//    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must be not set");
+//    [testClass addObserver:self forKeyPath:NSStringFromSelector(@selector(string)) options:0 context:_cmd];
+//    testClass.string = @"test";
+//    XCTAssertTrue(testClass.kvoTestCalled, @"KVO must work");
+//
+//    __block BOOL hookCalled = NO;
+//    [testClass aspect_hookSelector:@selector(setString:) atPosition:AspectPositionAfter withBlock:^(id object, NSArray *arguments) {
+//        NSLog(@"Aspect hook!");
+//        hookCalled = YES;
+//    }];
+//
+//    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must be not set");
+//    testClass.string = @"test";
+//    XCTAssertTrue(hookCalled, @"Hook must be called");
+//    XCTAssertTrue(testClass.kvoTestCalled, @"KVO must work");
+//    [testClass removeObserver:self forKeyPath:NSStringFromSelector(@selector(string)) context:_cmd];
+//    hookCalled = NO;
+//    testClass.kvoTestCalled = NO;
+//    testClass.string = @"test2";
+//    XCTAssertTrue(hookCalled, @"Hook must be called");
+//    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must no longer work");
+//}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+    NSLog(@"KVO!");
+    ((TestClass *)object).kvoTestCalled = YES;
 }
 
 @end

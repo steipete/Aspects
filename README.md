@@ -120,7 +120,10 @@ You can also add the two files NSObject+Aspects.h/m. There are no further requir
 
 Compatibility
 -------------
-You can freely mix Aspects with regular method swizzling or KVO.
+You can freely mix Aspects with regular method swizzling.
+
+KVO works if observers are created after your calls aspect_hookSelector: It most likely will crash the other way around.
+Still looking for workarounds here - any help apprechiated.
 
 Because of ugly implementation details on the ObjC runtime, methods that return unions that also contain structs might not work correctly unless this code runs on the arm64 runtime.
 
