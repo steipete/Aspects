@@ -134,4 +134,19 @@
     XCTAssertTrue(called_after2, @"Flag must have been set.");
 }
 
+- (void)testExample {
+    TestClass *testClass = [TestClass new];
+    TestClass *testClass2 = [TestClass new];
+
+    __block BOOL testCallCalled = NO;
+    [testClass aspect_hookSelector:@selector(testCall) atPosition:AspectPositionAfter withBlock:^(id object, NSArray *arguments) {
+        testCallCalled = YES;
+    }];
+
+    [testClass2 testCallAndExecuteBlock:^{
+        [testClass testCall];
+    }];
+    XCTAssertTrue(testCallCalled, @"Calling testCallAndExecuteBlock must call testCall");
+}
+
 @end

@@ -33,12 +33,30 @@ Aspects collects all arguments in the `arguments` array. Primitive values will b
 When to use Aspects
 -------------------
 
-Aspects can be used to dynamically add logging for debug builds only:
+Aspects can be used to **dynamically add logging** for debug builds only:
 
 ``` objc
 [UIViewController aspect_hookSelector:@selector(viewWillAppear:) atPosition:AspectPositionAfter withBlock:^(id object, NSArray *arguments) {
     NSLog(@"View Controller %@ will appear animated: %@", object, arguments.firstObject);
 }];
+```
+
+You can check if methods really are being called in your test cases:
+``` objc
+- (void)testExample {
+    TestClass *testClass = [TestClass new];
+    TestClass *testClass2 = [TestClass new];
+
+    __block BOOL testCallCalled = NO;
+    [testClass aspect_hookSelector:@selector(testCall) atPosition:AspectPositionAfter withBlock:^(id object, NSArray *arguments) {
+        testCallCalled = YES;
+    }];
+
+    [testClass2 testCallAndExecuteBlock:^{
+        [testClass testCall];
+    }];
+    XCTAssertTrue(testCallCalled, @"Calling testCallAndExecuteBlock must call testCall");
+}
 ```
 
 Another concenient use case is adding handlers for classes that you don't own. I've written it for use in [PSPDFKit](http://pspdfkit.com) where we required notifications when a view controller is being dismissed modally. This includes UIKit view controllers like `MFMailComposeViewController` or `UIImagePickerController`. Now we could have created subclasses for each of these controllers, but this would be quite a lot of unnecessary code. Aspects gives you a simpler solution for this problem:
@@ -61,7 +79,7 @@ Another concenient use case is adding handlers for classes that you don't own. I
 @end
 ```
 
-Other interesting use cases would be dynamic insertion of Analytics or Logging. Since Aspects wraps aruments into an array, it's extra convenient to use for logging argument calls.
+There are lots of other use cases where AOP can be convenient, like dynamically inserting your analytics hooks.
 
 Debugging
 ---------
