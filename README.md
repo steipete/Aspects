@@ -1,4 +1,4 @@
-Aspects v1.0.0 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects)
+Aspects v1.0.1 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects)
 ==============
 
 Delightful, simple library for aspect oriented programming (AOP) by [@steipete](http://twitter.com/steipete).
@@ -142,6 +142,10 @@ MIT licensed, Copyright (c) 2014 Peter Steinberger, steipete@gmail.com, [@steipe
 
 Release Notes
 -----------------
+
+Version 1.0.1
+
+- Minor tweaks and documentation improvements.
 
 Version 1.0.0
 
