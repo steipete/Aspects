@@ -3,7 +3,7 @@ Aspects
 
 Delightful, simple library for aspect oriented programming.
 
-**Think of Aspects as method swizzling on steroids.** It allows you to add code to methods either per object or per class, and you can choose the insertion point (AspectPosition: before/instead/after). Aspects automatically deals with calling super and is easier to use than regular method swizzling.
+**Think of Aspects as method swizzling on steroids. It allows you to add code to methods either per object or per class**, and you can choose the insertion point (before/instead/after). Aspects automatically deals with calling super and is easier to use than regular method swizzling.
 
 Aspects extends NSObject with the following methods:
 
@@ -24,6 +24,30 @@ Adding aspects returns an opaque token which can be used to deregister again. Al
 Aspects uses Objective-C message forwarding to hook into messages. This will create some overhead. Don't add aspects to methods that are called a lot. This means it's not a good fit for your model, but works well for view or controller code.
 
 Aspects collects all arguments in the `arguments` array. Primitive values will be boxed.
+
+When to use Aspects
+-------------------
+Aspects makes it really convenient to add blocks of code to a method, and is much simpler to use than regular swizzling. I've written it for use in [PSPDFKit](http://pspdfkit.com) where we required notifications when a view controller is being dismissed modally. This includes UIKit view controllers like `MFMailComposeViewController` or `UIImagePickerController`. Now we could have created subclasses for each of these controllers, but this would be quite a lot of unnecessary code. Aspects gives you a simpler solution:
+
+```objectivec
+@implementation UIViewController (DismissActionHook)
+
+// Will add a dismiss action once the controller gets dismissed.
+- (void)pspdf_addWillDismissAction:(void (^)(void))action {
+    PSPDFAssert(action != NULL);
+
+    __weak __typeof(self)weakSelf = self;
+    [self aspect_hookSelector:@selector(viewWillDisappear:) atPosition:AspectPositionAfter withBlock:^(id object, NSArray *arguments) {
+        if (weakSelf.isBeingDismissed) {
+            action();
+        }
+    }];
+}
+
+@end
+```
+
+Basically every time you would swizzle a method.
 
 Using Aspects with methods with a return type
 ---------------------------------------------
