@@ -8,15 +8,15 @@ Delightful, simple library for aspect oriented programming.
 Aspects extends NSObject with the following methods:
 
 ```objectivec
-    - (id)aspect_hookSelector:(SEL)selector
-                   atPosition:(AspectPosition)injectPosition
-                    withBlock:(void (^)(id object, NSArray *arguments))block;
+- (id)aspect_hookSelector:(SEL)selector
+               atPosition:(AspectPosition)injectPosition
+                withBlock:(void (^)(id object, NSArray *arguments))block;
 
-    + (id)aspect_hookSelector:(SEL)selector
-                   atPosition:(AspectPosition)injectPosition
-                     withBlock:(void (^)(id object, NSArray *arguments))block;
++ (id)aspect_hookSelector:(SEL)selector
+               atPosition:(AspectPosition)injectPosition
+                 withBlock:(void (^)(id object, NSArray *arguments))block;
 
-    + (BOOL)aspect_remove:(id)aspect;
++ (BOOL)aspect_remove:(id)aspect;
 ```
 
 Adding aspects returns an opaque token which can be used to deregister again. All calls are thread safe.
@@ -46,6 +46,12 @@ Aspects makes it really convenient to add blocks of code to a method, and is muc
 
 @end
 ```
+
+Debugging
+---------
+Aspects identifies itself nicely in the stack trace, so it's easy to see if a method has been hooked:
+
+![Stacktrace](stacktrace.png)
 
 Basically every time you would swizzle a method.
 
