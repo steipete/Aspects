@@ -10,7 +10,8 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 
-#define AspectLog(...) do { NSLog(__VA_ARGS__); }while(0)
+#define AspectLog(...)
+//#define AspectLog(...) do { NSLog(__VA_ARGS__); }while(0)
 
 @interface AspectIdentifier : NSObject
 - (id)initWithSelector:(SEL)selector object:(id)object block:(id)block;
@@ -19,7 +20,7 @@
 @property (nonatomic, weak) id object;
 @end
 
-@interface AspectContainer : NSObject
+@interface AspectsContainer : NSObject
 - (void)addAspect:(AspectIdentifier *)aspect atPosition:(AspectPosition)injectPosition;
 - (BOOL)removeAspect:(id)aspect;
 - (BOOL)hasAspects;
@@ -61,7 +62,7 @@ static id aspect_add(id self, SEL selector, AspectPosition position, void (^bloc
 
     AspectIdentifier *identifier = [[AspectIdentifier alloc] initWithSelector:selector object:self block:block];
     aspect_performLocked(^{
-        AspectContainer *aspectContainer = aspect_getContainerForObject(self, selector);
+        AspectsContainer *aspectContainer = aspect_getContainerForObject(self, selector);
         [aspectContainer addAspect:identifier atPosition:position];
 
         // Ensure the class is prepared.
@@ -80,7 +81,7 @@ static BOOL aspect_remove(AspectIdentifier *aspect) {
     aspect_performLocked(^{
         id object = aspect.object; // strongify
         if (object) {
-            AspectContainer *aspectContainer = aspect_getContainerForObject(object, aspect.selector);
+            AspectsContainer *aspectContainer = aspect_getContainerForObject(object, aspect.selector);
             success = [aspectContainer removeAspect:aspect];
         }
     });
@@ -100,14 +101,14 @@ static SEL aspect_aliasForSelector(SEL selector) {
 }
 
 // Loads or creates the aspect container.
-static AspectContainer *aspect_getContainerForObject(id object, SEL selector) {
+static AspectsContainer *aspect_getContainerForObject(id object, SEL selector) {
     NSCParameterAssert(object);
     NSCParameterAssert(selector);
 
     SEL aliasSelector = aspect_aliasForSelector(selector);
-    AspectContainer *aspectContainer = objc_getAssociatedObject(object, aliasSelector);
+    AspectsContainer *aspectContainer = objc_getAssociatedObject(object, aliasSelector);
     if (!aspectContainer) {
-        aspectContainer = [AspectContainer new];
+        aspectContainer = [AspectsContainer new];
         objc_setAssociatedObject(object, aliasSelector, aspectContainer, OBJC_ASSOCIATION_RETAIN);
     }
     return aspectContainer;
@@ -129,8 +130,11 @@ static void aspect_prepareClassAndHookSelector(id object, SEL selector) {
         NSCAssert(addedAlias, @"Original implementation for %@ is already copied to %@ on %@", NSStringFromSelector(selector), NSStringFromSelector(aliasSelector), class);
 
         // We use forwardInvocation to hook in.
-        BOOL isStruct = (*typeEncoding == '{') ? YES : NO;
-        class_replaceMethod(class, selector, isStruct ? (IMP)_objc_msgForward_stret : _objc_msgForward, typeEncoding);
+        // As an ugly internal runtime implementation detail, we need to determine of the method we hook returns a struct or anything larger than double.
+        // https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/LowLevelABI/000-Introduction/introduction.html
+        NSMethodSignature *signature = [object methodSignatureForSelector:selector];
+        BOOL useStret = *typeEncoding == '{' || signature.methodReturnLength > sizeof(double);
+        class_replaceMethod(class, selector, useStret ? (IMP)_objc_msgForward_stret : _objc_msgForward, typeEncoding);
 
         AspectLog(@"Aspects: Installed hook for -[%@ %@].", class, NSStringFromSelector(selector));
     }
@@ -229,8 +233,8 @@ static void __ASPECTS_ARE_BEING_CALLED__(id<NSObject> self, SEL selector, NSInvo
     NSCParameterAssert(invocation);
 
 	SEL aliasSelector = aspect_aliasForSelector(invocation.selector);
-    AspectContainer *objectContainer = objc_getAssociatedObject(self, aliasSelector);
-    AspectContainer *classContainer  = objc_getAssociatedObject(self.class, aliasSelector);
+    AspectsContainer *objectContainer = objc_getAssociatedObject(self, aliasSelector);
+    AspectsContainer *classContainer  = objc_getAssociatedObject(self.class, aliasSelector);
 
     // Before hooks.
     NSArray *arguments = nil;
@@ -381,12 +385,16 @@ static void __ASPECTS_ARE_BEING_CALLED__(id<NSObject> self, SEL selector, NSInvo
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p, SEL:%@ object:%@ block:%@>", self.class, self, NSStringFromSelector(self.selector), self.object, self.block];
+}
+
 @end
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-#pragma mark - AspectContainer
+#pragma mark - AspectsContainer
 
-@implementation AspectContainer
+@implementation AspectsContainer
 
 - (BOOL)hasAspects {
     return self.beforeAspects.count > 0 || self.insteadAspects.count > 0 || self.afterAspects.count > 0;
@@ -414,6 +422,10 @@ static void __ASPECTS_ARE_BEING_CALLED__(id<NSObject> self, SEL selector, NSInvo
         }
     }
     return NO;
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p, before:%@, instead:%@, after:%@>", self.class, self, self.beforeAspects, self.insteadAspects, self.afterAspects];
 }
 
 @end
