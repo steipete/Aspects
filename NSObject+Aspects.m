@@ -72,16 +72,16 @@ static id aspect_add(id self, SEL selector, AspectPosition position, void (^bloc
 
 static BOOL aspect_remove(AspectIdentifier *aspect) {
     if (![aspect isKindOfClass:AspectIdentifier.class]) {
-        AspectLog(@"Aspect: Invalid object given to aspect_remove.");
+        AspectLog(@"Aspect: Invalid object given to aspect_remove: %@", aspect);
         return NO;
     }
 
     __block BOOL success = NO;
     aspect_performLocked(^{
-        id object = aspect.object;
+        id object = aspect.object; // strongify
         if (object) {
-        AspectContainer *aspectContainer = aspect_getContainerForObject(object, aspect.selector);
-        success = [aspectContainer removeAspect:aspect];
+            AspectContainer *aspectContainer = aspect_getContainerForObject(object, aspect.selector);
+            success = [aspectContainer removeAspect:aspect];
         }
     });
     return success;
@@ -124,17 +124,15 @@ static void aspect_prepareClassAndHookSelector(id object, SEL selector) {
 
         // Make a method alias for the existing method implementation.
         const char *typeEncoding = method_getTypeEncoding(targetMethod);
-        //PSPDFCheckTypeEncoding(typeEncoding);
         SEL aliasSelector = aspect_aliasForSelector(selector);
-        BOOL addedAlias __attribute__((unused)) = class_addMethod(class, aliasSelector, method_getImplementation(targetMethod), typeEncoding);
+        __unused BOOL addedAlias = class_addMethod(class, aliasSelector, method_getImplementation(targetMethod), typeEncoding);
         NSCAssert(addedAlias, @"Original implementation for %@ is already copied to %@ on %@", NSStringFromSelector(selector), NSStringFromSelector(aliasSelector), class);
 
         // We use forwardInvocation to hook in.
-        AspectLog(@"Aspects: Installing hook for -[%@ %@].", class, NSStringFromSelector(selector));
+        BOOL isStruct = (*typeEncoding == '{') ? YES : NO;
+        class_replaceMethod(class, selector, isStruct ? (IMP)_objc_msgForward_stret : _objc_msgForward, typeEncoding);
 
-        const char *typeSignature = method_getTypeEncoding(targetMethod);
-        BOOL isStruct = (*typeSignature == '{') ? YES : NO;
-        class_replaceMethod(class, selector, isStruct ? (IMP)_objc_msgForward_stret : _objc_msgForward, typeSignature);
+        AspectLog(@"Aspects: Installed hook for -[%@ %@].", class, NSStringFromSelector(selector));
     }
 }
 
@@ -152,10 +150,10 @@ static Class aspect_hookClass(NSObject *self) {
 	if ([className hasSuffix:AspectSubclassSuffix]) {
 		return baseClass;
 
-    // We swizzle a class object, not a single object.
+        // We swizzle a class object, not a single object.
 	}else if (class_isMetaClass(baseClass)) {
         return aspect_hookClassInPlace((Class)self);
-    // Probably a KVO'ed class. Swizzle in place. Also swizzle meta classes in place.
+        // Probably a KVO'ed class. Swizzle in place. Also swizzle meta classes in place.
     }else if (statedClass != baseClass) {
         return aspect_hookClassInPlace(baseClass);
     }
