@@ -24,6 +24,10 @@
     block();
 }
 
+- (CGRect)testThatReturnsAStruct {
+    return CGRectMake(100, 100, 100, 100);
+}
+
 @end
 
 @interface AspectsDemoTests : XCTestCase @end
@@ -147,6 +151,17 @@
         [testClass testCall];
     }];
     XCTAssertTrue(testCallCalled, @"Calling testCallAndExecuteBlock must call testCall");
+}
+
+- (void)testStructReturn {
+    TestClass *testClass = [TestClass new];
+    CGRect rect = [testClass testThatReturnsAStruct];
+    [testClass aspect_hookSelector:@selector(testThatReturnsAStruct) atPosition:AspectPositionAfter withBlock:^(id object, NSArray *arguments) {
+
+    }];
+
+    CGRect rectHooked = [testClass testThatReturnsAStruct];
+    XCTAssertTrue(CGRectEqualToRect(rect, rectHooked), @"Must be equal");
 }
 
 @end

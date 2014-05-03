@@ -119,7 +119,8 @@ static void aspect_prepareClassAndHookSelector(id object, SEL selector) {
 
     Class class = aspect_hookClass(object);
     Method targetMethod = class_getInstanceMethod(class, selector);
-    if (method_getImplementation(targetMethod) != _objc_msgForward) {
+    IMP targetMethodIMP = method_getImplementation(targetMethod);
+    if (targetMethodIMP != _objc_msgForward && targetMethodIMP != (IMP)_objc_msgForward_stret) {
 
         // Make a method alias for the existing method implementation.
         const char *typeEncoding = method_getTypeEncoding(targetMethod);
@@ -130,7 +131,10 @@ static void aspect_prepareClassAndHookSelector(id object, SEL selector) {
 
         // We use forwardInvocation to hook in.
         AspectLog(@"Aspects: Installing hook for -[%@ %@].", class, NSStringFromSelector(selector));
-        class_replaceMethod(class, selector, _objc_msgForward, method_getTypeEncoding(targetMethod));
+
+        const char *typeSignature = method_getTypeEncoding(targetMethod);
+        BOOL isStruct = (*typeSignature == '{') ? YES : NO;
+        class_replaceMethod(class, selector, isStruct ? (IMP)_objc_msgForward_stret : _objc_msgForward, typeSignature);
     }
 }
 
