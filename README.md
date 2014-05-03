@@ -18,7 +18,7 @@ Aspects extends `NSObject` with the following methods:
 // Hook a selector class-wide.
 + (id)aspect_hookSelector:(SEL)selector
                atPosition:(AspectPosition)injectPosition
-                 withBlock:(void (^)(id object, NSArray *arguments))block;
+                withBlock:(void (^)(id object, NSArray *arguments))block;
 
 // Deregister aspects.
 + (BOOL)aspect_remove:(id)aspect;
