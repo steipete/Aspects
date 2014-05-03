@@ -51,6 +51,7 @@ Aspects makes it really convenient to add blocks of code to a method, and is muc
 
 @end
 ```
+
 Other interesting use cases would be dynamic insertion of Analytics or Logging. Since Aspects wraps aruments into an array, it's extra convenient to use for logging argument calls.
 
 Debugging
@@ -84,13 +85,10 @@ Installation
 The simplest option is to use `pod "Aspects"`.
 You can also add the two files NSObject+Aspects.h/m. There are no further requirements.
 
+Compatibility
+-------------
+You can freely mix Aspects with regular mehtod swizzling or KVO.
 
-Release Notes
------------------
-
-Version 1.0.0
-
-- Initial release
 
 Credits
 -------
@@ -106,3 +104,11 @@ Supported iOS & SDK Versions
 License
 -------
 MIT licensed, Copyright (c) 2014 Peter Steinberger, steipete@gmail.com, http://twitter.com/steipete
+
+
+Release Notes
+-----------------
+
+Version 1.0.0
+
+- Initial release
