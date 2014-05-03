@@ -12,12 +12,12 @@ Aspects extends `NSObject` with the following methods:
 // If you choose `AspectPositionInstead`, the `arguments` array contains an additional argument which is the original invocation.
 // @return A token which allows to later deregister the aspect.
 - (id)aspect_hookSelector:(SEL)selector
-               atPosition:(AspectPosition)injectPosition
+               atPosition:(AspectPosition)position
                 withBlock:(void (^)(id object, NSArray *arguments))block;
 
 // Hook a selector class-wide.
 + (id)aspect_hookSelector:(SEL)selector
-               atPosition:(AspectPosition)injectPosition
+               atPosition:(AspectPosition)position
                 withBlock:(void (^)(id object, NSArray *arguments))block;
 
 // Deregister aspects.
