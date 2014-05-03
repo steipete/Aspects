@@ -3,7 +3,7 @@ Aspects v1.0.1 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branc
 
 Delightful, simple library for aspect oriented programming (AOP) by [@steipete](http://twitter.com/steipete).
 
-**Think of Aspects as method swizzling on steroids. It allows you to add code to existing methods per class or per instance**, whilst thinking of the insertstion point e.g. before/instead/after. Aspects automatically deals with calling super and is easier to use than regular method swizzling.
+**Think of Aspects as method swizzling on steroids. It allows you to add code to existing methods per class or per instance**, whilst thinking of the insertion point e.g. before/instead/after. Aspects automatically deals with calling super and is easier to use than regular method swizzling.
 
 Aspects extends `NSObject` with the following methods:
 
@@ -25,9 +25,9 @@ Aspects extends `NSObject` with the following methods:
 + (BOOL)aspect_remove:(id)aspect;
 ```
 
-Adding aspects returns an opaque token which can be used to deregister again. All calls are thread safe.
+Adding aspects returns an opaque token which can be used to deregister again. All calls are thread-safe.
 
-Aspects uses Objective-C message forwarding to hook into messages. This will create some overhead. Don't add aspects to methods that are called a lot. Aspects is meant for view/controller code that is not called a 1000 times per second.
+Aspects uses Objective-C message forwarding to hook into messages. This will create some overhead. Don't add aspects to methods that are called a lot. Aspects is meant for view/controller code that is not called 1000 times per second.
 
 Aspects collects all arguments in the `arguments` array. Primitive values will be boxed.
 
@@ -43,11 +43,11 @@ Aspects can be used to **dynamically add logging** for debug builds only:
 ```
 
 -------------------
-It can be used to greatly simply your analytics setup:
+It can be used to greatly simplify your analytics setup:
 https://github.com/orta/ARAnalytics/pull/74
 
 -------------------
-You can check if methods really are being called in your test cases:
+You can check if methods are really being called in your test cases:
 ``` objc
 - (void)testExample {
     TestClass *testClass = [TestClass new];
@@ -66,7 +66,7 @@ You can check if methods really are being called in your test cases:
 ```
 
 -------------------
-Another convienent use case is adding handlers for classes that you don't own. I've written it for use in [PSPDFKit](http://pspdfkit.com) where we require notifications when a view controller is being dismissed modally. This includes UIKit view controllers like `MFMailComposeViewController` or `UIImagePickerController`. We could have created subclasses for each of these controllers, but this would be quite a lot of unnecessary code. Aspects gives you a simpler solution for this problem:
+Another convenient use case is adding handlers for classes that you don't own. I've written it for use in [PSPDFKit](http://pspdfkit.com), where we require notifications when a view controller is being dismissed modally. This includes UIKit view controllers like `MFMailComposeViewController` or `UIImagePickerController`. We could have created subclasses for each of these controllers, but this would be quite a lot of unnecessary code. Aspects gives you a simpler solution for this problem:
 
 ``` objc
 @implementation UIViewController (DismissActionHook)
