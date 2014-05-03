@@ -7,6 +7,7 @@ Delightful, simple library for aspect oriented programming.
 
 Aspects extends NSObject with the following methods:
 
+```objectivec
     - (id)aspect_hookSelector:(SEL)selector
                    atPosition:(AspectPosition)injectPosition
                     withBlock:(void (^)(id object, NSArray *arguments))block;
@@ -16,6 +17,7 @@ Aspects extends NSObject with the following methods:
                      withBlock:(void (^)(id object, NSArray *arguments))block;
 
     + (BOOL)aspect_remove:(id)aspect;
+```
 
 Adding aspects returns an opaque token which can be used to deregister again. All calls are thread safe.
 
