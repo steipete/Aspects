@@ -42,9 +42,11 @@ Aspects can be used to **dynamically add logging** for debug builds only:
 }];
 ```
 
+-------------------
 It can be used to greatly simply your analytics setup:
 https://github.com/orta/ARAnalytics/pull/74
 
+-------------------
 You can check if methods really are being called in your test cases:
 ``` objc
 - (void)testExample {
@@ -63,6 +65,7 @@ You can check if methods really are being called in your test cases:
 }
 ```
 
+-------------------
 Another convienent use case is adding handlers for classes that you don't own. I've written it for use in [PSPDFKit](http://pspdfkit.com) where we require notifications when a view controller is being dismissed modally. This includes UIKit view controllers like `MFMailComposeViewController` or `UIImagePickerController`. We could have created subclasses for each of these controllers, but this would be quite a lot of unnecessary code. Aspects gives you a simpler solution for this problem:
 
 ``` objc
@@ -112,6 +115,7 @@ When you're using Aspects with `AspectPositionInstead`, the last argument of the
 Installation
 ------------
 The simplest option is to use `pod "Aspects"`.
+
 You can also add the two files NSObject+Aspects.h/m. There are no further requirements.
 
 Compatibility
