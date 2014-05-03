@@ -6,3 +6,5 @@
 #
 # Pods/
 
+.DS_Store
+xcuserdata
