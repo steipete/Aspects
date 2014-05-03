@@ -20,7 +20,7 @@ Aspects extends `NSObject` with the following methods:
                atPosition:(AspectPosition)injectPosition
                  withBlock:(void (^)(id object, NSArray *arguments))block;
 
-// Unregister aspects.
+// Deregister aspects.
 + (BOOL)aspect_remove:(id)aspect;
 ```
 
