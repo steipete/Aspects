@@ -53,8 +53,6 @@ Aspects identifies itself nicely in the stack trace, so it's easy to see if a me
 
 ![Stacktrace](stacktrace.png)
 
-Basically every time you would swizzle a method.
-
 Using Aspects with methods with a return type
 ---------------------------------------------
 
@@ -82,6 +80,10 @@ Release Notes
 Version 1.0.0
 
 - Initial release
+
+Credits
+-------
+The idea to use `_objc_msgForward` and parts of the `NSInvocation` argument selection is from the excellent [ReactiveCocoa](https://github.com/ReactiveCocoa/ReactiveCocoa) from the GitHub guys.
 
 
 Supported iOS & SDK Versions
