@@ -201,8 +201,8 @@ static Class aspect_hookClassInPlace(Class class) {
 static void aspect_hookedForwardInvocation(Class class) {
     NSCParameterAssert(class);
 
-    AspectLog(@"Aspects: %@ is now aspect aware.", class);
     class_replaceMethod(class, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, "v@:@");
+    AspectLog(@"Aspects: %@ is now aspect aware.", class);
 }
 
 static void aspect_hookedGetClass(Class class, Class statedClass) {
@@ -336,6 +336,8 @@ static void __ASPECTS_ARE_BEING_CALLED__(id<NSObject> self, SEL selector, NSInvo
 		WRAP_AND_RETURN(BOOL);
 	} else if (strcmp(argType, @encode(bool)) == 0) {
 		WRAP_AND_RETURN(BOOL);
+	} else if (strcmp(argType, @encode(_Bool)) == 0) {
+		WRAP_AND_RETURN(_Bool);
 	} else if (strcmp(argType, @encode(char *)) == 0) {
 		WRAP_AND_RETURN(const char *);
 	} else if (strcmp(argType, @encode(void (^)(void))) == 0) {
