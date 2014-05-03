@@ -1,7 +1,7 @@
 Aspects
 =======
 
-Delightful, simple library for aspect oriented programming.
+Delightful, simple library for aspect oriented programming by [@steipete](http://twitter.com/steipete).
 
 **Think of Aspects as method swizzling on steroids. It allows you to add code to methods either per object or per class**, and you can choose the insertion point (before/instead/after). Aspects automatically deals with calling super and is easier to use than regular method swizzling.
 
@@ -94,4 +94,4 @@ Supported iOS & SDK Versions
 
 License
 -------
-MIT licensed.
+MIT licensed, Copyright (c) 2014 Peter Steinberger, steipete@gmail.com, http://twitter.com/steipete
