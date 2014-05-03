@@ -32,7 +32,16 @@ Aspects collects all arguments in the `arguments` array. Primitive values will b
 
 When to use Aspects
 -------------------
-Aspects makes it really convenient to add blocks of code to a method, and is much simpler to use than regular swizzling. I've written it for use in [PSPDFKit](http://pspdfkit.com) where we required notifications when a view controller is being dismissed modally. This includes UIKit view controllers like `MFMailComposeViewController` or `UIImagePickerController`. Now we could have created subclasses for each of these controllers, but this would be quite a lot of unnecessary code. Aspects gives you a simpler solution:
+
+Aspects can be used to dynamically add logging for debug builds only:
+
+``` objc
+[UIViewController aspect_hookSelector:@selector(viewWillAppear:) atPosition:AspectPositionAfter withBlock:^(id object, NSArray *arguments) {
+    NSLog(@"View Controller %@ will appear animated: %@", object, arguments.firstObject);
+}];
+```
+
+Another concenient use case is adding handlers for classes that you don't own. I've written it for use in [PSPDFKit](http://pspdfkit.com) where we required notifications when a view controller is being dismissed modally. This includes UIKit view controllers like `MFMailComposeViewController` or `UIImagePickerController`. Now we could have created subclasses for each of these controllers, but this would be quite a lot of unnecessary code. Aspects gives you a simpler solution for this problem:
 
 ``` objc
 @implementation UIViewController (DismissActionHook)
@@ -58,7 +67,7 @@ Debugging
 ---------
 Aspects identifies itself nicely in the stack trace, so it's easy to see if a method has been hooked:
 
-![Stacktrace](stacktrace.png)
+![Stacktrace](stacktrace@2x.png)
 
 Using Aspects with methods with a return type
 ---------------------------------------------
