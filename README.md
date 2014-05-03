@@ -26,8 +26,9 @@ Aspects collects all arguments in the `arguments` array. Primitive values will b
 Using Aspects with methods with a return type
 ---------------------------------------------
 
-When you're using Aspects with `AspectPositionInstead`, the last argument of the `arguments` array will be the NSInvocation. You can use this invocation to customize the return value:
+When you're using Aspects with `AspectPositionInstead`, the last argument of the `arguments` array will be the `NSInvocation` of the original implementation. You can use this invocation to customize the return value:
 
+```objectivec
     [PSPDFDrawView aspect_hookSelector:@selector(shouldProcessTouches:withEvent:) atPosition:AspectPositionInstead withBlock:^(id object, NSArray *arguments) {
         // Call original implementation.
         BOOL processTouches;
@@ -40,6 +41,7 @@ When you're using Aspects with `AspectPositionInstead`, the last argument of the
             [invocation setReturnValue:&processTouches];
         }
     }];
+```
 
 
 Release Notes
