@@ -132,9 +132,14 @@ static void aspect_prepareClassAndHookSelector(id object, SEL selector) {
         // We use forwardInvocation to hook in.
         // As an ugly internal runtime implementation detail, we need to determine of the method we hook returns a struct or anything larger than double.
         // https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/LowLevelABI/000-Introduction/introduction.html
+        IMP msgForwardIMP = _objc_msgForward;
+#if !defined(__arm64__)
         NSMethodSignature *signature = [object methodSignatureForSelector:selector];
-        BOOL useStret = *typeEncoding == '{' || signature.methodReturnLength > sizeof(double);
-        class_replaceMethod(class, selector, useStret ? (IMP)_objc_msgForward_stret : _objc_msgForward, typeEncoding);
+        if (*typeEncoding == '{' || signature.methodReturnLength > sizeof(double)) {
+            msgForwardIMP = (IMP)_objc_msgForward_stret;
+        }
+#endif
+        class_replaceMethod(class, selector, msgForwardIMP, typeEncoding);
 
         AspectLog(@"Aspects: Installed hook for -[%@ %@].", class, NSStringFromSelector(selector));
     }
