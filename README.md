@@ -114,7 +114,7 @@ You can also add the two files NSObject+Aspects.h/m. There are no further requir
 
 Compatibility
 -------------
-You can freely mix Aspects with regular mehtod swizzling or KVO.
+You can freely mix Aspects with regular method swizzling or KVO.
 
 
 Credits
