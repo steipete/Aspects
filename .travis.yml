@@ -4,3 +4,4 @@ notifications:
 language: objective-c
 script:
 - xcodebuild -project AspectsDemo/AspectsDemo.xcodeproj -scheme AspectsDemo -sdk iphonesimulator ONLY_ACTIVE_ARCH=NO test
+- xcodebuild -project AspectsDemo/AspectsDemo.xcodeproj -scheme AspectsDemo -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPad Retina (64-bit),OS=7.0' test
