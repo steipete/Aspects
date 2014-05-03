@@ -13,6 +13,12 @@ typedef NS_ENUM(NSUInteger, AspectPosition) {
     AspectPositionAfter
 };
 
+/**
+ Aspects uses Objective-C message forwarding to hook into messages. This will create some overhead. Don't add aspects to methods that are called a lot. Aspects is meant for view/controller code that is not called a 1000 times per second.
+
+ Aspects collects all arguments in the `arguments` array. Primitive values will be boxed.
+ Adding aspects returns an opaque token which can be used to deregister again. All calls are thread safe.
+ */
 @interface NSObject (Aspects)
 
 /// Adds a block of code before/instead or after the current selector.
