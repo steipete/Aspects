@@ -372,7 +372,7 @@ static void __ASPECTS_ARE_BEING_CALLED__(id<NSObject> self, SEL selector, NSInvo
 
 @implementation AspectIdentifier
 
-- (id)initWithSelector:(SEL)selector object:(id)object block:(id)block; {
+- (id)initWithSelector:(SEL)selector object:(id)object block:(id)block {
     NSCParameterAssert(block);
     NSCParameterAssert(selector);
     if (self = [super init]) {

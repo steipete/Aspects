@@ -325,6 +325,23 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wextra",
+					"-Wno-unused-parameter",
+					"-Wno-sign-compare",
+					"-Wdocumentation",
+					"-Wno-static-in-inline",
+					"-Wno-objc-missing-property-synthesis",
+					"-Wcast-align",
+					"-Wmissing-declarations",
+					"-Wmissing-prototypes",
+					"-Woverlength-strings",
+					"-Wshadow",
+					"-Wundeclared-selector",
+					"-Wunreachable-code",
+					"-Wformat=2",
+				);
 			};
 			name = Debug;
 		};
@@ -358,6 +375,23 @@
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wextra",
+					"-Wno-unused-parameter",
+					"-Wno-sign-compare",
+					"-Wdocumentation",
+					"-Wno-static-in-inline",
+					"-Wno-objc-missing-property-synthesis",
+					"-Wcast-align",
+					"-Wmissing-declarations",
+					"-Wmissing-prototypes",
+					"-Woverlength-strings",
+					"-Wshadow",
+					"-Wundeclared-selector",
+					"-Wunreachable-code",
+					"-Wformat=2",
+				);
 			};
 			name = Release;
 		};
@@ -446,6 +480,7 @@
 				78573F1F19155A2E000D3B00 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		78573F2019155A2E000D3B00 /* Build configuration list for PBXNativeTarget "AspectsDemoTests" */ = {
 			isa = XCConfigurationList;
@@ -454,6 +489,7 @@
 				78573F2219155A2E000D3B00 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
