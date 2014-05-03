@@ -5,23 +5,28 @@ Delightful, simple library for aspect oriented programming by [@steipete](http:/
 
 **Think of Aspects as method swizzling on steroids. It allows you to add code to methods either per object or per class**, and you can choose the insertion point (before/instead/after). Aspects automatically deals with calling super and is easier to use than regular method swizzling.
 
-Aspects extends NSObject with the following methods:
+Aspects extends `NSObject` with the following methods:
 
 ``` objc
+// Adds a block of code before/instead or after the current selector.
+// If you choose `AspectPositionInstead`, `arguments` contains an additional argument which is the original invocation.
+// @return A token which allows to later deregister the aspect.
 - (id)aspect_hookSelector:(SEL)selector
                atPosition:(AspectPosition)injectPosition
                 withBlock:(void (^)(id object, NSArray *arguments))block;
 
+// Hook a selector class-wide.
 + (id)aspect_hookSelector:(SEL)selector
                atPosition:(AspectPosition)injectPosition
                  withBlock:(void (^)(id object, NSArray *arguments))block;
 
+// Unregister aspects.
 + (BOOL)aspect_remove:(id)aspect;
 ```
 
 Adding aspects returns an opaque token which can be used to deregister again. All calls are thread safe.
 
-Aspects uses Objective-C message forwarding to hook into messages. This will create some overhead. Don't add aspects to methods that are called a lot. This means it's not a good fit for your model, but works well for view or controller code.
+Aspects uses Objective-C message forwarding to hook into messages. This will create some overhead. Don't add aspects to methods that are called a lot. Aspects is meant for view/controller code that is not called a 1000 times per second.
 
 Aspects collects all arguments in the `arguments` array. Primitive values will be boxed.
 
@@ -46,6 +51,7 @@ Aspects makes it really convenient to add blocks of code to a method, and is muc
 
 @end
 ```
+Other interesting use cases would be dynamic insertion of Analytics or Logging. Since Aspects wraps aruments into an array, it's extra convenient to use for logging argument calls.
 
 Debugging
 ---------
