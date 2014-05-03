@@ -8,19 +8,20 @@ Delightful, simple library for aspect oriented programming (AOP) by [@steipete](
 Aspects extends `NSObject` with the following methods:
 
 ``` objc
-// Adds a block of code before/instead/after the current selector.
-// If you choose `AspectPositionInstead`, the `arguments` array contains an additional argument which is the original invocation.
-// @return A token which allows to later deregister the aspect.
+/// Adds a block of code before/instead/after the current `selector` for a specific object.
+/// If you choose `AspectPositionInstead`, `arguments` contains an additional argument which is the original invocation.
+/// @return A token which allows to later deregister the aspect.
 - (id)aspect_hookSelector:(SEL)selector
                atPosition:(AspectPosition)position
                 withBlock:(void (^)(id object, NSArray *arguments))block;
 
-// Hook a selector class-wide.
+/// Hooks a selector class-wide.
 + (id)aspect_hookSelector:(SEL)selector
                atPosition:(AspectPosition)position
                 withBlock:(void (^)(id object, NSArray *arguments))block;
 
-// Deregister aspects.
+/// Unregister an aspect.
+/// @return YES if deregistration is successful, otherwise NO.
 + (BOOL)aspect_remove:(id)aspect;
 ```
 
