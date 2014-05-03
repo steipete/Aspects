@@ -67,7 +67,7 @@ Debugging
 ---------
 Aspects identifies itself nicely in the stack trace, so it's easy to see if a method has been hooked:
 
-![Stacktrace](stacktrace@2x.png)
+<img src="https://raw.githubusercontent.com/steipete/Aspects/master/stacktrace@2x.png" width="50%">
 
 Using Aspects with methods with a return type
 ---------------------------------------------
