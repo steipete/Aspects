@@ -3,7 +3,7 @@ Aspects
 
 Delightful, simple library for aspect oriented programming.
 
-**Think of Aspects as method swizzling on steroids.** It allows you to hook onto selectors either per object or per class, and you can choose the insertion point (AspectPosition: before/instead/after). Aspects automatically deals with calling super and is easier to use than regular method swizzling.
+**Think of Aspects as method swizzling on steroids.** It allows you to add code to methods either per object or per class, and you can choose the insertion point (AspectPosition: before/instead/after). Aspects automatically deals with calling super and is easier to use than regular method swizzling.
 
 Aspects extends NSObject with the following methods:
 
