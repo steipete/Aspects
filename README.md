@@ -3,7 +3,7 @@ Aspects
 
 Delightful, simple library for aspect oriented programming.
 
-*Think of Aspects as method swizzling on steroids.* It allows you to hook onto selectors either per object or per class, and you can choose the insertion point (AspectPosition: before/instead/after). Aspects automatically deals with calling super and is easier to use than regular method swizzling.
+**Think of Aspects as method swizzling on steroids.** It allows you to hook onto selectors either per object or per class, and you can choose the insertion point (AspectPosition: before/instead/after). Aspects automatically deals with calling super and is easier to use than regular method swizzling.
 
 Aspects extends NSObject with the following methods:
 
@@ -23,8 +23,8 @@ Aspects uses Objective-C message forwarding to hook into messages. This will cre
 
 Aspects collects all arguments in the `arguments` array. Primitive values will be boxed.
 
-Using Aspects with methods that have a return type
---------------------------------------------------
+Using Aspects with methods with a return type
+---------------------------------------------
 
 When you're using Aspects with `AspectPositionInstead`, the last argument of the `arguments` array will be the NSInvocation. You can use this invocation to customize the return value:
 
