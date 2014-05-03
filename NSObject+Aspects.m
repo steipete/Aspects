@@ -57,9 +57,6 @@ static NSString *const AspectMessagePrefix = @"aspects_";
 #pragma mark - Private Helper
 
 static id aspect_add(id self, SEL selector, AspectPosition position, void (^block)(id object, NSArray *arguments)) {
-    NSCParameterAssert(block);
-    NSCParameterAssert(selector);
-
     AspectIdentifier *identifier = [[AspectIdentifier alloc] initWithSelector:selector object:self block:block];
     aspect_performLocked(^{
         AspectsContainer *aspectContainer = aspect_getContainerForObject(self, selector);
@@ -103,8 +100,6 @@ static SEL aspect_aliasForSelector(SEL selector) {
 // Loads or creates the aspect container.
 static AspectsContainer *aspect_getContainerForObject(id object, SEL selector) {
     NSCParameterAssert(object);
-    NSCParameterAssert(selector);
-
     SEL aliasSelector = aspect_aliasForSelector(selector);
     AspectsContainer *aspectContainer = objc_getAssociatedObject(object, aliasSelector);
     if (!aspectContainer) {
@@ -115,9 +110,7 @@ static AspectsContainer *aspect_getContainerForObject(id object, SEL selector) {
 }
 
 static void aspect_prepareClassAndHookSelector(id object, SEL selector) {
-    NSCParameterAssert(object);
     NSCParameterAssert(selector);
-
     Class class = aspect_hookClass(object);
     Method targetMethod = class_getInstanceMethod(class, selector);
     IMP targetMethodIMP = method_getImplementation(targetMethod);
@@ -154,7 +147,6 @@ static void aspect_prepareClassAndHookSelector(id object, SEL selector) {
 
 static Class aspect_hookClass(NSObject *self) {
     NSCParameterAssert(self);
-
 	Class statedClass = self.class;
 	Class baseClass = object_getClass(self);
 	NSString *className = NSStringFromClass(baseClass);
@@ -193,14 +185,13 @@ static Class aspect_hookClass(NSObject *self) {
 }
 
 static Class aspect_hookClassInPlace(Class class) {
-    NSCParameterAssert(class);
-
     static NSMutableSet *swizzledClasses;
     static dispatch_once_t pred;
     dispatch_once(&pred, ^{
         swizzledClasses = [NSMutableSet new];
     });
 
+    NSCParameterAssert(class);
     NSString *className = NSStringFromClass(class);
     @synchronized (swizzledClasses) {
         if (![swizzledClasses containsObject:className]) {
@@ -213,7 +204,6 @@ static Class aspect_hookClassInPlace(Class class) {
 
 static void aspect_hookedForwardInvocation(Class class) {
     NSCParameterAssert(class);
-
     class_replaceMethod(class, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, "v@:@");
     AspectLog(@"Aspects: %@ is now aspect aware.", class);
 }
@@ -221,7 +211,6 @@ static void aspect_hookedForwardInvocation(Class class) {
 static void aspect_hookedGetClass(Class class, Class statedClass) {
     NSCParameterAssert(class);
     NSCParameterAssert(statedClass);
-
 	Method method = class_getInstanceMethod(class, @selector(class));
 	IMP newIMP = imp_implementationWithBlock(^(id self) {
 		return statedClass;
@@ -238,9 +227,7 @@ static void aspect_hookedGetClass(Class class, Class statedClass) {
 // This is the swizzled forwardInvocation: method.
 static void __ASPECTS_ARE_BEING_CALLED__(id<NSObject> self, SEL selector, NSInvocation *invocation) {
     NSCParameterAssert(self);
-    NSCParameterAssert(selector);
     NSCParameterAssert(invocation);
-
 	SEL aliasSelector = aspect_aliasForSelector(invocation.selector);
     AspectsContainer *objectContainer = objc_getAssociatedObject(self, aliasSelector);
     AspectsContainer *classContainer  = objc_getAssociatedObject(self.class, aliasSelector);
@@ -386,6 +373,8 @@ static void __ASPECTS_ARE_BEING_CALLED__(id<NSObject> self, SEL selector, NSInvo
 @implementation AspectIdentifier
 
 - (id)initWithSelector:(SEL)selector object:(id)object block:(id)block; {
+    NSCParameterAssert(block);
+    NSCParameterAssert(selector);
     if (self = [super init]) {
         _selector = selector;
         _object = object;
