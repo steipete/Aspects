@@ -121,7 +121,11 @@ static void aspect_prepareClassAndHookSelector(id object, SEL selector) {
     Class class = aspect_hookClass(object);
     Method targetMethod = class_getInstanceMethod(class, selector);
     IMP targetMethodIMP = method_getImplementation(targetMethod);
-    if (targetMethodIMP != _objc_msgForward && targetMethodIMP != (IMP)_objc_msgForward_stret) {
+    if (targetMethodIMP != _objc_msgForward
+#if !defined(__arm64__)
+        && targetMethodIMP != (IMP)_objc_msgForward_stret
+#endif
+        ) {
 
         // Make a method alias for the existing method implementation.
         const char *typeEncoding = method_getTypeEncoding(targetMethod);
