@@ -150,7 +150,8 @@ Release Notes
 
 Version 1.1.0 (Upcoming)
 
-- Allow hooking dealloc
+- Renamed the files from NSObject+Aspects.m/h to just Aspects.m/h.
+- Allow hooking dealloc.
 - Fixes infinite loop if the same method is hooked for multiple classes. Hooking will only work for one class in the hierarchy.
 - Additional checks to prevent things like hooking retain/release/autorelease or forwardInvocation:
 - The original implementation of forwardInvocation is now correctly preserved.
