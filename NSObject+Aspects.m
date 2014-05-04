@@ -122,7 +122,7 @@ static BOOL aspect_isSelectorHookAllowed(Class class, SEL selector) {
             if ([swizzledSelectorNames containsObject:AspectsHasParentToken]) {
                 AspectLog(@"Aspects: Error: Selector `%@` already hooked in %@. A method can only be hooked once per class hierarchy. Usually you want to hook the topmost method.", selectorName, currentClass);
                 return NO;
-            }else {
+            }else if (class == currentClass) {
                 // Already modified and topmost!
                 return YES;
             }
@@ -147,16 +147,15 @@ static BOOL aspect_isSelectorHookAllowed(Class class, SEL selector) {
     return YES;
 }
 
-
-static SEL aspect_aliasForSelector(Class class, SEL selector) {
+static SEL aspect_aliasForSelector(SEL selector) {
     NSCParameterAssert(selector);
-	return NSSelectorFromString([AspectMessagePrefix stringByAppendingFormat:@"_%@_%@", class, NSStringFromSelector(selector)]);
+	return NSSelectorFromString([AspectMessagePrefix stringByAppendingFormat:@"_%@", NSStringFromSelector(selector)]);
 }
 
 // Loads or creates the aspect container.
 static AspectsContainer *aspect_getContainerForObject(id<NSObject> object, SEL selector) {
     NSCParameterAssert(object);
-    SEL aliasSelector = aspect_aliasForSelector(object.class, selector);
+    SEL aliasSelector = aspect_aliasForSelector(selector);
     AspectsContainer *aspectContainer = objc_getAssociatedObject(object, aliasSelector);
     if (!aspectContainer) {
         aspectContainer = [AspectsContainer new];
@@ -178,7 +177,7 @@ static void aspect_prepareClassAndHookSelector(id<NSObject> object, SEL selector
 
         // Make a method alias for the existing method implementation.
         const char *typeEncoding = method_getTypeEncoding(targetMethod);
-        SEL aliasSelector = aspect_aliasForSelector(object.class, selector);
+        SEL aliasSelector = aspect_aliasForSelector(selector);
         __unused BOOL addedAlias = class_addMethod(class, aliasSelector, method_getImplementation(targetMethod), typeEncoding);
         NSCAssert(addedAlias, @"Original implementation for %@ is already copied to %@ on %@", NSStringFromSelector(selector), NSStringFromSelector(aliasSelector), class);
 
@@ -288,7 +287,7 @@ static void aspect_hookedGetClass(Class class, Class statedClass) {
 static void __ASPECTS_ARE_BEING_CALLED__(id<NSObject> self, SEL selector, NSInvocation *invocation) {
     NSCParameterAssert(self);
     NSCParameterAssert(invocation);
-	SEL aliasSelector = aspect_aliasForSelector(self.class, invocation.selector);
+	SEL aliasSelector = aspect_aliasForSelector(invocation.selector);
     AspectsContainer *objectContainer = objc_getAssociatedObject(self, aliasSelector);
     AspectsContainer *classContainer  = objc_getAssociatedObject(self.class, aliasSelector);
 
@@ -310,10 +309,15 @@ static void __ASPECTS_ARE_BEING_CALLED__(id<NSObject> self, SEL selector, NSInvo
         aspect_invoke(objectContainer.insteadAspects, argumentsWithInvocation);
     }else {
         Class class = object_getClass(invocation.target);
-        if ((respondsToAlias = [class instancesRespondToSelector:aliasSelector])) {
-            invocation.selector = aliasSelector;
-            [invocation invoke];
-        }
+        do {
+            if ((respondsToAlias = [class instancesRespondToSelector:aliasSelector])) {
+                invocation.selector = aliasSelector;
+                [invocation invoke];
+            }else {
+                class = class_getSuperclass(class);
+            }
+        }while (!respondsToAlias && class);
+
     }
 
     // After hooks.
