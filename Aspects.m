@@ -10,8 +10,8 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 
-//#define AspectLog(...)
-#define AspectLog(...) do { NSLog(__VA_ARGS__); }while(0)
+#define AspectLog(...)
+//#define AspectLog(...) do { NSLog(__VA_ARGS__); }while(0)
 
 // Tracks a single aspect.
 @interface AspectIdentifier : NSObject
