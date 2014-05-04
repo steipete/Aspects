@@ -1,6 +1,6 @@
 //
 //  Aspects.h
-//  Aspects
+//  Aspects - A delightful, simple library for aspect oriented programming
 //
 //  Copyright (c) 2014 Peter Steinberger. Licensed under the MIT license.
 //
@@ -8,15 +8,15 @@
 #import <Foundation/Foundation.h>
 
 typedef NS_ENUM(NSUInteger, AspectPosition) {
-    AspectPositionBefore,
-    AspectPositionInstead,
-    AspectPositionAfter
+    AspectPositionBefore,  /// Called before the original implementation.
+    AspectPositionInstead, /// Will replace the original implementation.
+    AspectPositionAfter    /// Called after the original implementation.
 };
 
 /// Opaque Aspect Token that allows to deregister the hook.
 @protocol Aspect <NSObject>
 
-/// Deegister an aspect.
+/// Deregisters an aspect.
 /// @return YES if deregistration is successful, otherwise NO.
 - (BOOL)remove;
 
@@ -31,11 +31,27 @@ typedef NS_ENUM(NSUInteger, AspectPosition) {
 @interface NSObject (Aspects)
 
 /// Adds a block of code before/instead/after the current `selector` for a specific object.
-/// If you choose `AspectPositionInstead`, `arguments` contains an additional argument which is the original invocation.
+/// If you choose `AspectPositionInstead`, the `arguments` array will contain the original invocation as last argument.
 /// @return A token which allows to later deregister the aspect.
-- (id<Aspect>)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block;
+- (id<Aspect>)aspect_hookSelector:(SEL)selector
+                       atPosition:(AspectPosition)position
+                        withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block
+                            error:(NSError **)error;
 
 /// Hooks a selector class-wide.
-+ (id<Aspect>)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block;
++ (id<Aspect>)aspect_hookSelector:(SEL)selector
+                       atPosition:(AspectPosition)position
+                        withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block
+                            error:(NSError **)error;
 
 @end
+
+
+typedef NS_ENUM(NSUInteger, AspectsErrorCode) {
+    AspectsErrorSelectorBlacklisted,                   /// Selectors like release, retain, autorelease are blacklisted.
+    AspectsErrorSelectorDeallocPosition,               /// When hooking dealloc, AspectPositionInstead is not allowed.
+    AspectsErrorSelectorAlreadyHookedInClassHierarchy, /// Statically hooking the same method in subclasses is not allowed.
+    AspectsErrorFailedToAllocateClassPair,             /// The runtime failed creating a class pair.
+    AspectsErrorRemoveObjectAlreadyDeallocated = 100   /// (for removing) The object hooked is already deallocated.
+};
+extern NSString *const AspectsErrorDomain;

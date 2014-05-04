@@ -1,4 +1,4 @@
-Aspects v1.1.0 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects)
+Aspects v1.2.0 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects)
 ==============
 
 Delightful, simple library for aspect oriented programming (AOP) by [@steipete](http://twitter.com/steipete).
@@ -9,16 +9,18 @@ Aspects extends `NSObject` with the following methods:
 
 ``` objc
 /// Adds a block of code before/instead/after the current `selector` for a specific object.
-/// If you choose `AspectPositionInstead`, `arguments` contains an additional argument which is the original invocation.
+/// If you choose `AspectPositionInstead`, the `arguments` array will contain the original invocation as last argument.
 /// @return A token which allows to later deregister the aspect.
 - (id<Aspect>)aspect_hookSelector:(SEL)selector
                        atPosition:(AspectPosition)position
-                        withBlock:(void (^)(id object, NSArray *arguments))block;
+                        withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block
+                            error:(NSError **)error;
 
 /// Hooks a selector class-wide.
 + (id<Aspect>)aspect_hookSelector:(SEL)selector
                        atPosition:(AspectPosition)position
-                        withBlock:(void (^)(id object, NSArray *arguments))block;
+                        withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block
+                            error:(NSError **)error;
 
 /// Deregister an aspect.
 /// @return YES if deregistration is successful, otherwise NO.
@@ -149,6 +151,11 @@ MIT licensed, Copyright (c) 2014 Peter Steinberger, steipete@gmail.com, [@steipe
 
 Release Notes
 -----------------
+
+Version 1.2.0
+
+- Adds error parameter.
+- Improvements in subclassing registration tracking.
 
 Version 1.1.0
 
