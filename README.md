@@ -45,7 +45,7 @@ Aspects can be used to **dynamically add logging** for debug builds only:
 
 -------------------
 It can be used to greatly simplify your analytics setup:
-https://github.com/orta/ARAnalytics/pull/74
+https://github.com/orta/ARAnalytics/pull/77
 
 -------------------
 You can check if methods are really being called in your test cases:
@@ -149,7 +149,7 @@ MIT licensed, Copyright (c) 2014 Peter Steinberger, steipete@gmail.com, [@steipe
 Release Notes
 -----------------
 
-Version 1.1.0 (Upcoming)
+Version 1.1.0
 
 - Renamed the files from NSObject+Aspects.m/h to just Aspects.m/h.
 - Removing now works via calling `remove` on the aspect token.
