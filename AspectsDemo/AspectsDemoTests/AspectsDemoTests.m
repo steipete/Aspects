@@ -103,16 +103,16 @@
     XCTAssertEqualObjects(testLabel3.text, @"Global", @"Must match");
     testLabel3.text = @"Test";
     XCTAssertEqualObjects(testLabel3.text, @"Global", @"Must match");
-    XCTAssertTrue([UILabel aspect_remove:globalAspect], @"Must work");
+    XCTAssertTrue([globalAspect remove], @"Must work");
     XCTAssertEqualObjects(testLabel3.text, @"Test", @"Must match");
 
     // Test that removing an aspect returns the original.
     XCTAssertEqualObjects(testLabel.text, @"Custom Text", @"Must match");
-    XCTAssertTrue([UILabel aspect_remove:aspect], @"Must return YES");
+    XCTAssertTrue([aspect remove], @"Must return YES");
     XCTAssertEqualObjects(testLabel.text, @"Default text", @"Must match");
-    XCTAssertFalse([UILabel aspect_remove:aspect], @"Must return NO");
+    XCTAssertFalse([aspect remove], @"Must return NO");
 
-    XCTAssertTrue([UILabel aspect_remove:aspect2], @"Must be able to deregister");
+    XCTAssertTrue([aspect2 remove], @"Must be able to deregister");
 }
 
 - (void)testAspectsCalledPerObject {
@@ -130,7 +130,7 @@
     [testClass2 testCall];
     XCTAssertFalse(called, @"Flag must have been NOT set.");
 
-    XCTAssertTrue([NSObject aspect_remove:aspect], @"Must be able to deregister");
+    XCTAssertTrue([aspect remove], @"Must be able to deregister");
 }
 
 - (void)testExecutionOrderAndMultipleRegistation {
@@ -158,12 +158,12 @@
     XCTAssertTrue(called_after, @"Flag must have been set.");
     XCTAssertTrue(called_after2, @"Flag must have been set.");
 
-    XCTAssertTrue([NSObject aspect_remove:aspect_after], @"Must be able to deregister");
-    XCTAssertTrue([NSObject aspect_remove:aspect_before], @"Must be able to deregister");
-    XCTAssertTrue([NSObject aspect_remove:aspect_after2], @"Must be able to deregister");
-    XCTAssertFalse([NSObject aspect_remove:aspect_after], @"Must not be able to deregister twice");
-    XCTAssertFalse([NSObject aspect_remove:aspect_before], @"Must not be able to deregister twice");
-    XCTAssertFalse([NSObject aspect_remove:aspect_after2], @"Must not be able to deregister twice");
+    XCTAssertTrue([aspect_after remove], @"Must be able to deregister");
+    XCTAssertTrue([aspect_before remove], @"Must be able to deregister");
+    XCTAssertTrue([aspect_after2 remove], @"Must be able to deregister");
+    XCTAssertFalse([aspect_after remove], @"Must not be able to deregister twice");
+    XCTAssertFalse([aspect_before remove], @"Must not be able to deregister twice");
+    XCTAssertFalse([aspect_after2 remove], @"Must not be able to deregister twice");
 }
 
 - (void)testExample {
@@ -179,7 +179,7 @@
         [testClass testCall];
     }];
     XCTAssertTrue(testCallCalled, @"Calling testCallAndExecuteBlock must call testCall");
-    XCTAssertTrue([NSObject aspect_remove:aspectToken], @"Must be able to deregister");
+    XCTAssertTrue([aspectToken remove], @"Must be able to deregister");
 }
 
 - (void)testStructReturn {
@@ -190,7 +190,7 @@
 
     CGRect rectHooked = [testClass testThatReturnsAStruct];
     XCTAssertTrue(CGRectEqualToRect(rect, rectHooked), @"Must be equal");
-    XCTAssertTrue([NSObject aspect_remove:aspect], @"Must be able to deregister");
+    XCTAssertTrue([aspect remove], @"Must be able to deregister");
 }
 
 - (void)testHookReleaseIsNotAllowed {
@@ -256,14 +256,14 @@
 
     XCTAssertNotEqualObjects(testClass.class, object_getClass(testClass), @"Object must have a custom subclass.");
 
-    XCTAssertTrue([TestClass aspect_remove:aspectToken], @"Deregistration must work");
+    XCTAssertTrue([aspectToken remove], @"Deregistration must work");
     XCTAssertEqualObjects(testClass.class, object_getClass(testClass), @"Object must not have a custom subclass.");
 
     testCallCalled = NO;
     [testClass testCall];
     XCTAssertFalse(testCallCalled, @"Hook must no longer work.");
 
-    XCTAssertFalse([TestClass aspect_remove:aspectToken], @"Deregistration must not work twice");
+    XCTAssertFalse([aspectToken remove], @"Deregistration must not work twice");
 }
 
 - (void)testGlobalTokenDeregistrationWithCustomForwardInvocation {
@@ -294,7 +294,7 @@
         XCTAssertNotEqual(method_getImplementation(forwardInvocationMethod), originalForwardInvocationIMP, @"Implementations must not be equal");
     }
 
-    XCTAssertTrue([TestClass aspect_remove:token], @"Deregistration must work");
+    XCTAssertTrue([token remove], @"Deregistration must work");
 
     // Test that forwardInvocation (again) points to NSObject and thus is correctly restored.
     {
@@ -306,7 +306,7 @@
     [testClass test];
     XCTAssertFalse(testCalled, @"Hook must no longer work.");
 
-    XCTAssertFalse([TestWithCustomForwardInvocation aspect_remove:token], @"Deregistration must not work twice");
+    XCTAssertFalse([token remove], @"Deregistration must not work twice");
 }
 
 - (void)testGlobalTokenDeregistration {
@@ -337,7 +337,7 @@
         XCTAssertNotEqual(method_getImplementation(forwardInvocationMethod), method_getImplementation(objectMethod), @"Implementations must not be equal");
     }
 
-    XCTAssertTrue([TestClass aspect_remove:token], @"Deregistration must work");
+    XCTAssertTrue([token remove], @"Deregistration must work");
 
     // Test that forwardInvocation (again) points to NSObject and thus is correctly restored.
     {
@@ -350,7 +350,7 @@
     [testClass testCall];
     XCTAssertFalse(testCallCalled, @"Hook must no longer work.");
 
-    XCTAssertFalse([TestClass aspect_remove:token], @"Deregistration must not work twice");
+    XCTAssertFalse([token remove], @"Deregistration must not work twice");
 }
 
 - (void)testSimpleDeregistration {
@@ -364,7 +364,7 @@
     XCTAssertTrue(called, @"Flag must have been set.");
 
     called = NO;
-    [TestClass aspect_remove:aspectToken];
+    XCTAssertTrue([aspectToken remove], @"Must allow deregistration");
     [testClass testCall];
     XCTAssertFalse(called, @"Flag must have been NOT set.");
 }
@@ -393,7 +393,7 @@
     XCTAssertTrue(hookCalled, @"Hook must be called");
     XCTAssertFalse(testClass.kvoTestCalled, @"KVO must no longer work");
 
-    XCTAssertTrue([NSObject aspect_remove:aspectToken], @"Must be able to deregister");
+    XCTAssertTrue([aspectToken remove], @"Must be able to deregister");
 }
 
 // TODO: Pre-registeded KVO is currently not working.
@@ -448,7 +448,7 @@
 #pragma clang diagnostic pop
     XCTAssertTrue(testClass.forwardInvocationCalled, @"Must have called custom forwardInvocation:");
 
-    XCTAssertTrue([NSObject aspect_remove:aspectToken], @"Must be able to deregister");
+    XCTAssertTrue([aspectToken remove], @"Must be able to deregister");
 }
 
 @end
@@ -520,7 +520,7 @@
     XCTAssertTrue(A_aspect_called, @"A aspect should be called");
     XCTAssertFalse(B_aspect_called, @"B aspect should not be called");
 
-    XCTAssertTrue([NSObject aspect_remove:aspectToken1], @"Must be able to deregister");
+    XCTAssertTrue([aspectToken1 remove], @"Must be able to deregister");
 }
 
 @end

@@ -13,6 +13,15 @@ typedef NS_ENUM(NSUInteger, AspectPosition) {
     AspectPositionAfter
 };
 
+/// Opaque Aspect Token that allows to deregister the hook.
+@protocol Aspect <NSObject>
+
+/// Deegister an aspect.
+/// @return YES if deregistration is successful, otherwise NO.
+- (BOOL)remove;
+
+@end
+
 /**
  Aspects uses Objective-C message forwarding to hook into messages. This will create some overhead. Don't add aspects to methods that are called a lot. Aspects is meant for view/controller code that is not called a 1000 times per second.
 
@@ -24,15 +33,9 @@ typedef NS_ENUM(NSUInteger, AspectPosition) {
 /// Adds a block of code before/instead/after the current `selector` for a specific object.
 /// If you choose `AspectPositionInstead`, `arguments` contains an additional argument which is the original invocation.
 /// @return A token which allows to later deregister the aspect.
-- (id)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block;
+- (id<Aspect>)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block;
 
 /// Hooks a selector class-wide.
-+ (id)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block;
-
-/// Unregister an aspect.
-/// @note This is a single method that works for both object and class-based hooks, as all required state is preserved in the opaque aspect token.
-/// Can also be called via `[NSObject aspect_remove:]`. The class context is not used.
-/// @return YES if deregistration is successful, otherwise NO.
-+ (BOOL)aspect_remove:(id)aspect;
++ (id<Aspect>)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block;
 
 @end

@@ -11,18 +11,19 @@ Aspects extends `NSObject` with the following methods:
 /// Adds a block of code before/instead/after the current `selector` for a specific object.
 /// If you choose `AspectPositionInstead`, `arguments` contains an additional argument which is the original invocation.
 /// @return A token which allows to later deregister the aspect.
-- (id)aspect_hookSelector:(SEL)selector
+- (id<Aspect>)aspect_hookSelector:(SEL)selector
                atPosition:(AspectPosition)position
                 withBlock:(void (^)(id object, NSArray *arguments))block;
 
 /// Hooks a selector class-wide.
-+ (id)aspect_hookSelector:(SEL)selector
++ (id<Aspect>)aspect_hookSelector:(SEL)selector
                atPosition:(AspectPosition)position
                 withBlock:(void (^)(id object, NSArray *arguments))block;
 
-/// Unregister an aspect.
+/// Deregister an aspect.
 /// @return YES if deregistration is successful, otherwise NO.
-+ (BOOL)aspect_remove:(id)aspect;
+id<Aspect> aspect = ...;
+[aspect remove];
 ```
 
 Adding aspects returns an opaque token which can be used to deregister again. All calls are thread-safe.
@@ -151,6 +152,7 @@ Release Notes
 Version 1.1.0 (Upcoming)
 
 - Renamed the files from NSObject+Aspects.m/h to just Aspects.m/h.
+- Removing now works via calling `remove` on the aspect token.
 - Allow hooking dealloc.
 - Fixes infinite loop if the same method is hooked for multiple classes. Hooking will only work for one class in the hierarchy.
 - Additional checks to prevent things like hooking retain/release/autorelease or forwardInvocation:

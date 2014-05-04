@@ -53,10 +53,6 @@ BOOL aspect_isSelectorAllowed(Class klass, SEL selector, AspectPosition position
     return aspect_add(self, selector, position, block);
 }
 
-+ (BOOL)aspect_remove:(id)aspect {
-    return aspect_remove(aspect);
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Private Helper
 
@@ -110,34 +106,8 @@ static SEL aspect_aliasForSelector(SEL selector) {
 	return NSSelectorFromString([AspectMessagePrefix stringByAppendingFormat:@"_%@", NSStringFromSelector(selector)]);
 }
 
-// Loads or creates the aspect container.
-static AspectsContainer *aspect_getContainerForObject(NSObject *self, SEL selector) {
-    NSCParameterAssert(self);
-    SEL aliasSelector = aspect_aliasForSelector(selector);
-    AspectsContainer *aspectContainer = objc_getAssociatedObject(self, aliasSelector);
-    if (!aspectContainer) {
-        aspectContainer = [AspectsContainer new];
-        objc_setAssociatedObject(self, aliasSelector, aspectContainer, OBJC_ASSOCIATION_RETAIN);
-    }
-    return aspectContainer;
-}
-
-static AspectsContainer *aspect_getContainerForClass(Class klass, SEL selector) {
-    NSCParameterAssert(klass);
-    AspectsContainer *classContainer = nil;
-    do {
-        classContainer = objc_getAssociatedObject(klass, selector);
-        if (classContainer.hasAspects) break;
-    }while ((klass = class_getSuperclass(klass)));
-
-    return classContainer;
-}
-
-static void aspect_destroyContainerForObject(id<NSObject> self, SEL selector) {
-    NSCParameterAssert(self);
-    SEL aliasSelector = aspect_aliasForSelector(selector);
-    objc_setAssociatedObject(self, aliasSelector, nil, OBJC_ASSOCIATION_RETAIN);
-}
+///////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark - Class + Selector Preparation
 
 static void aspect_prepareClassAndHookSelector(NSObject *self, SEL selector) {
     NSCParameterAssert(selector);
@@ -403,19 +373,51 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
 }
 #undef aspect_invoke
 
+///////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark - Aspect Container Management
+
+// Loads or creates the aspect container.
+static AspectsContainer *aspect_getContainerForObject(NSObject *self, SEL selector) {
+    NSCParameterAssert(self);
+    SEL aliasSelector = aspect_aliasForSelector(selector);
+    AspectsContainer *aspectContainer = objc_getAssociatedObject(self, aliasSelector);
+    if (!aspectContainer) {
+        aspectContainer = [AspectsContainer new];
+        objc_setAssociatedObject(self, aliasSelector, aspectContainer, OBJC_ASSOCIATION_RETAIN);
+    }
+    return aspectContainer;
+}
+
+static AspectsContainer *aspect_getContainerForClass(Class klass, SEL selector) {
+    NSCParameterAssert(klass);
+    AspectsContainer *classContainer = nil;
+    do {
+        classContainer = objc_getAssociatedObject(klass, selector);
+        if (classContainer.hasAspects) break;
+    }while ((klass = class_getSuperclass(klass)));
+
+    return classContainer;
+}
+
+static void aspect_destroyContainerForObject(id<NSObject> self, SEL selector) {
+    NSCParameterAssert(self);
+    SEL aliasSelector = aspect_aliasForSelector(selector);
+    objc_setAssociatedObject(self, aliasSelector, nil, OBJC_ASSOCIATION_RETAIN);
+}
+
 @end
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Selector Blacklist Checking
 
-@interface AspectSelectorTracker : NSObject
-- (id)initWithTrackedClass:(Class)trackedClass parent:(AspectSelectorTracker *)parent;
+@interface AspectTracker : NSObject
+- (id)initWithTrackedClass:(Class)trackedClass parent:(AspectTracker *)parent;
 @property (nonatomic, strong) Class trackedClass;
 @property (nonatomic, strong) NSMutableSet *selectorNames;
-@property (nonatomic, weak) AspectSelectorTracker *parentEntry;
+@property (nonatomic, weak) AspectTracker *parentEntry;
 @end
-@implementation AspectSelectorTracker
-- (id)initWithTrackedClass:(Class)trackedClass parent:(AspectSelectorTracker *)parent {
+@implementation AspectTracker
+- (id)initWithTrackedClass:(Class)trackedClass parent:(AspectTracker *)parent {
     if (self = [super init]) {
         _trackedClass = trackedClass;
         _parentEntry = parent;
@@ -454,12 +456,12 @@ BOOL aspect_isSelectorAllowed(Class class, SEL selector, AspectPosition position
     // Search for the current class and the class hierarchy.
     Class currentClass = class;
     do {
-        AspectSelectorTracker *tracker = swizzledClassesDict[currentClass];
+        AspectTracker *tracker = swizzledClassesDict[currentClass];
         if ([tracker.selectorNames containsObject:selectorName]) {
 
             // Find the topmost class for the log.
             if (tracker.parentEntry) {
-                AspectSelectorTracker *topmostEntry = tracker.parentEntry;
+                AspectTracker *topmostEntry = tracker.parentEntry;
                 while (topmostEntry.parentEntry) {
                     topmostEntry = topmostEntry.parentEntry;
                 }
@@ -474,11 +476,11 @@ BOOL aspect_isSelectorAllowed(Class class, SEL selector, AspectPosition position
 
     // Add the selector as being modified.
     currentClass = class;
-    AspectSelectorTracker *parentTracker = nil;
+    AspectTracker *parentTracker = nil;
     do {
-        AspectSelectorTracker *tracker = swizzledClassesDict[currentClass];
+        AspectTracker *tracker = swizzledClassesDict[currentClass];
         if (!tracker) {
-            tracker = [[AspectSelectorTracker alloc] initWithTrackedClass:currentClass parent:parentTracker];
+            tracker = [[AspectTracker alloc] initWithTrackedClass:currentClass parent:parentTracker];
             swizzledClassesDict[(id<NSCopying>)currentClass] = tracker;
         }
         [tracker.selectorNames addObject:selectorName];
@@ -589,6 +591,10 @@ BOOL aspect_isSelectorAllowed(Class class, SEL selector, AspectPosition position
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p, SEL:%@ object:%@ block:%@>", self.class, self, NSStringFromSelector(self.selector), self.object, self.block];
+}
+
+- (BOOL)remove {
+    return aspect_remove(self);
 }
 
 @end
