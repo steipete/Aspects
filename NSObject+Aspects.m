@@ -36,6 +36,8 @@
 static NSString *const AspectSubclassSuffix = @"_Aspects_";
 static NSString *const AspectMessagePrefix = @"aspects_";
 
+BOOL aspect_isSelectorAllowed(Class class, SEL selector, AspectPosition position);
+
 @implementation NSObject (Aspects)
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -60,7 +62,7 @@ static id aspect_add(id<NSObject> self, SEL selector, AspectPosition position, v
     __block AspectIdentifier *identifier = [[AspectIdentifier alloc] initWithSelector:selector object:self block:block];
 
     aspect_performLocked(^{
-        if (!aspect_isSelectorHookAllowed(self.class, selector, position)) {
+        if (!aspect_isSelectorAllowed(self.class, selector, position)) {
             identifier = nil;
         }else {
             AspectsContainer *aspectContainer = aspect_getContainerForObject(self, selector);
@@ -95,62 +97,6 @@ static void aspect_performLocked(dispatch_block_t block) {
     OSSpinLockLock(&aspect_lock);
     block();
     OSSpinLockUnlock(&aspect_lock);
-}
-
-static NSString *const AspectsHasParentToken = @"__AspectsHasParentToken__";
-static BOOL aspect_isSelectorHookAllowed(Class class, SEL selector, AspectPosition position) {
-    static NSSet *disallowedSelectorList;
-    static NSMutableDictionary *swizzledClassesDict;
-    static dispatch_once_t pred;
-    dispatch_once(&pred, ^{
-        swizzledClassesDict = [NSMutableDictionary new];
-        disallowedSelectorList = [NSSet setWithObjects:@"retain", @"release", @"autorelease", @"forwardInvocation:", nil];
-    });
-
-    // Check against the blacklist.
-    NSString *selectorName = NSStringFromSelector(selector);
-    if ([disallowedSelectorList containsObject:selectorName]) {
-        AspectLog(@"Aspects: Selector `%@` is blacklisted.", selectorName);
-        return NO;
-    }
-
-    // Additional checks.
-    if ([selectorName isEqualToString:@"dealloc"] && position == AspectPositionInstead) {
-        AspectLog(@"Aspects: dealloc can not be replaced. Use AspectPositionBefore.");
-        return NO;
-    }
-
-    // Search for the current class and the class hierarchy.
-    Class currentClass = class;
-    do {
-        NSSet *swizzledSelectorNames = swizzledClassesDict[currentClass];
-        if ([swizzledSelectorNames containsObject:selectorName]) {
-            if ([swizzledSelectorNames containsObject:AspectsHasParentToken]) {
-                AspectLog(@"Aspects: Error: Selector `%@` already hooked in %@. A method can only be hooked once per class hierarchy. Usually you want to hook the topmost method.", selectorName, currentClass);
-                return NO;
-            }else if (class == currentClass) {
-                // Already modified and topmost!
-                return YES;
-            }
-        }
-    }while ((currentClass = class_getSuperclass(currentClass)));
-
-    // Add the selector as being modified.
-    currentClass = class;
-    do {
-        NSMutableSet *swizzledSelectorNames = swizzledClassesDict[currentClass];
-        if (!swizzledSelectorNames) {
-            swizzledSelectorNames = [NSMutableSet set];
-            swizzledClassesDict[(id<NSCopying>)currentClass] = swizzledSelectorNames;
-        }
-        [swizzledSelectorNames addObject:selectorName];
-        // All superclasses get marked as having a subclass that is modified.
-        if (class != currentClass) {
-            [swizzledSelectorNames addObject:AspectsHasParentToken];
-        }
-    }while ((currentClass = class_getSuperclass(currentClass)));
-
-    return YES;
 }
 
 static SEL aspect_aliasForSelector(SEL selector) {
@@ -302,10 +248,10 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained id<NSObject> self, 
     NSMutableArray *afterClassAspects = [NSMutableArray array];
     Class class = object_getClass(self);
     do {
-        AspectsContainer *classContainer  = objc_getAssociatedObject(class, aliasSelector);
-        [beforeClassAspects addObjectsFromArray:classContainer.beforeAspects];
+        AspectsContainer *classContainer = objc_getAssociatedObject(class, aliasSelector);
+        [beforeClassAspects  addObjectsFromArray:classContainer.beforeAspects];
         [insteadClassAspects addObjectsFromArray:classContainer.insteadAspects];
-        [afterClassAspects addObjectsFromArray:classContainer.afterAspects];
+        [afterClassAspects   addObjectsFromArray:classContainer.afterAspects];
     }while ((class = class_getSuperclass(class)));
 
     // Before hooks.
@@ -330,10 +276,9 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained id<NSObject> self, 
             if ((respondsToAlias = [class instancesRespondToSelector:aliasSelector])) {
                 invocation.selector = aliasSelector;
                 [invocation invoke];
-            }else {
-                class = class_getSuperclass(class);
+                break;
             }
-        }while (!respondsToAlias && class);
+        }while (!respondsToAlias && (class = class_getSuperclass(class)));
     }
 
     // After hooks.
@@ -356,6 +301,90 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained id<NSObject> self, 
 #undef aspect_invoke
 
 @end
+
+///////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark - Selector Blacklist Checking
+
+@interface AspectSelectorTracker : NSObject
+- (id)initWithTrackedClass:(Class)trackedClass parent:(AspectSelectorTracker *)parent;
+@property (nonatomic, strong) Class trackedClass;
+@property (nonatomic, strong) NSMutableSet *selectorNames;
+@property (nonatomic, weak) AspectSelectorTracker *parentEntry;
+@end
+@implementation AspectSelectorTracker
+- (id)initWithTrackedClass:(Class)trackedClass parent:(AspectSelectorTracker *)parent {
+    if (self = [super init]) {
+        _trackedClass = trackedClass;
+        _parentEntry = parent;
+        _selectorNames = [NSMutableSet new];
+    }
+    return self;
+}
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %@, trackedClass: %@, selectorNames:%@, parent:%p>", self.class, self, NSStringFromClass(self.trackedClass), self.selectorNames, self.parentEntry];
+}
+@end
+
+static NSString *const AspectsHasParentToken = @"__AspectsHasParentToken__";
+BOOL aspect_isSelectorAllowed(Class class, SEL selector, AspectPosition position) {
+    static NSSet *disallowedSelectorList;
+    static NSMutableDictionary *swizzledClassesDict;
+    static dispatch_once_t pred;
+    dispatch_once(&pred, ^{
+        swizzledClassesDict = [NSMutableDictionary new];
+        disallowedSelectorList = [NSSet setWithObjects:@"retain", @"release", @"autorelease", @"forwardInvocation:", nil];
+    });
+
+    // Check against the blacklist.
+    NSString *selectorName = NSStringFromSelector(selector);
+    if ([disallowedSelectorList containsObject:selectorName]) {
+        AspectLog(@"Aspects: Selector `%@` is blacklisted.", selectorName);
+        return NO;
+    }
+
+    // Additional checks.
+    if ([selectorName isEqualToString:@"dealloc"] && position == AspectPositionInstead) {
+        AspectLog(@"Aspects: dealloc can not be replaced. Use AspectPositionBefore.");
+        return NO;
+    }
+
+    // Search for the current class and the class hierarchy.
+    Class currentClass = class;
+    do {
+        AspectSelectorTracker *tracker = swizzledClassesDict[currentClass];
+        if ([tracker.selectorNames containsObject:selectorName]) {
+
+            // Find the topmost class for the log.
+            if (tracker.parentEntry) {
+                AspectSelectorTracker *topmostEntry = tracker.parentEntry;
+                while (topmostEntry.parentEntry) {
+                    topmostEntry = topmostEntry.parentEntry;
+                }
+                AspectLog(@"Aspects: Error: %@ already hooked in %@. A method can only be hooked once per class hierarchy.", selectorName, NSStringFromClass(topmostEntry.trackedClass));
+                return NO;
+            }else if (class == currentClass) {
+                // Already modified and topmost!
+                return YES;
+            }
+        }
+    }while ((currentClass = class_getSuperclass(currentClass)));
+
+    // Add the selector as being modified.
+    currentClass = class;
+    AspectSelectorTracker *parentTracker = nil;
+    do {
+        AspectSelectorTracker *tracker = swizzledClassesDict[currentClass];
+        if (!tracker) {
+            tracker = [[AspectSelectorTracker alloc] initWithTrackedClass:currentClass parent:parentTracker];
+            swizzledClassesDict[(id<NSCopying>)currentClass] = tracker;
+        }
+        [tracker.selectorNames addObject:selectorName];
+        // All superclasses get marked as having a subclass that is modified.
+        parentTracker = tracker;
+    }while ((currentClass = class_getSuperclass(currentClass)));
+
+    return YES;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - NSInvocation (Aspects)
@@ -381,10 +410,9 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained id<NSObject> self, 
         __autoreleasing Class theClass = Nil;
         [self getArgument:&theClass atIndex:(NSInteger)index];
         return theClass;
+    // Using this list will box the number with the appropriate constructor, instead of the generic NSValue.
 	} else if (strcmp(argType, @encode(char)) == 0) {
 		WRAP_AND_RETURN(char);
-	} else if (strcmp(argType, @encode(unichar)) == 0) {
-		WRAP_AND_RETURN(unichar);
 	} else if (strcmp(argType, @encode(int)) == 0) {
 		WRAP_AND_RETURN(int);
 	} else if (strcmp(argType, @encode(short)) == 0) {
@@ -411,8 +439,6 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained id<NSObject> self, 
 		WRAP_AND_RETURN(BOOL);
 	} else if (strcmp(argType, @encode(bool)) == 0) {
 		WRAP_AND_RETURN(BOOL);
-	} else if (strcmp(argType, @encode(_Bool)) == 0) {
-		WRAP_AND_RETURN(_Bool);
 	} else if (strcmp(argType, @encode(char *)) == 0) {
 		WRAP_AND_RETURN(const char *);
 	} else if (strcmp(argType, @encode(void (^)(void))) == 0) {
@@ -452,8 +478,8 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained id<NSObject> self, 
     NSCParameterAssert(selector);
     if (self = [super init]) {
         _selector = selector;
-        _object = object;
         _block = block;
+        _object = object; // weak
     }
     return self;
 }
