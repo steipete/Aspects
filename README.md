@@ -121,14 +121,15 @@ You can also add the two files Aspects.h/m. There are no further requirements.
 
 Compatibility and Limitations
 -----------------------------
-You can freely mix Aspects with regular method swizzling.
+Aspects uses quite some runtime trickery to achieve what it does. You can mostly mix this with regular method swizzling.
 
-KVO works if observers are created after your calls aspect_hookSelector: It most likely will crash the other way around.
+An important limitation is that for class-based hooking, a method can only be hooked once within the subclass hierarchy. [See #2](https://github.com/steipete/Aspects/issues/2)
+This does not apply for objects that are hooked. Aspects creates a dynamic subclass here and has full control.
+
+KVO works if observers are created after your calls `aspect_hookSelector:` It most likely will crash the other way around.
 Still looking for workarounds here - any help apprechiated.
 
 Because of ugly implementation details on the ObjC runtime, methods that return unions that also contain structs might not work correctly unless this code runs on the arm64 runtime.
-
-A method can only be hooked once within the subclass hierarchy. [See #2](https://github.com/steipete/Aspects/issues/2)
 
 Credits
 -------
