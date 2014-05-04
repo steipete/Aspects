@@ -118,14 +118,16 @@ The simplest option is to use `pod "Aspects"`.
 
 You can also add the two files NSObject+Aspects.h/m. There are no further requirements.
 
-Compatibility
--------------
+Compatibility and Limitations
+-----------------------------
 You can freely mix Aspects with regular method swizzling.
 
 KVO works if observers are created after your calls aspect_hookSelector: It most likely will crash the other way around.
 Still looking for workarounds here - any help apprechiated.
 
 Because of ugly implementation details on the ObjC runtime, methods that return unions that also contain structs might not work correctly unless this code runs on the arm64 runtime.
+
+A method can only be hooked once within the subclass hierarchy. [See #2](https://github.com/steipete/Aspects/issues/2)
 
 Credits
 -------

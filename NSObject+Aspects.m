@@ -10,8 +10,8 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 
-#define AspectLog(...)
-//#define AspectLog(...) do { NSLog(__VA_ARGS__); }while(0)
+//#define AspectLog(...)
+#define AspectLog(...) do { NSLog(__VA_ARGS__); }while(0)
 
 @interface AspectIdentifier : NSObject
 - (id)initWithSelector:(SEL)selector object:(id)object block:(id)block;
@@ -42,7 +42,7 @@ static NSString *const AspectMessagePrefix = @"aspects_";
 #pragma mark - Public Aspects API
 
 + (id)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(id object, NSArray *arguments))block {
-    return aspect_add(self, selector, position, block);
+    return aspect_add((id<NSObject>)self, selector, position, block);
 }
 
 - (id)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(id object, NSArray *arguments))block {
@@ -56,14 +56,19 @@ static NSString *const AspectMessagePrefix = @"aspects_";
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Private Helper
 
-static id aspect_add(id self, SEL selector, AspectPosition position, void (^block)(id object, NSArray *arguments)) {
-    AspectIdentifier *identifier = [[AspectIdentifier alloc] initWithSelector:selector object:self block:block];
-    aspect_performLocked(^{
-        AspectsContainer *aspectContainer = aspect_getContainerForObject(self, selector);
-        [aspectContainer addAspect:identifier atPosition:position];
+static id aspect_add(id<NSObject> self, SEL selector, AspectPosition position, void (^block)(id object, NSArray *arguments)) {
+    __block AspectIdentifier *identifier = [[AspectIdentifier alloc] initWithSelector:selector object:self block:block];
 
-        // Ensure the class is prepared.
-        aspect_prepareClassAndHookSelector(self, selector);
+    aspect_performLocked(^{
+        if (!aspect_isSelectorHookAllowed(self.class, selector)) {
+            identifier = nil;
+        }else {
+            AspectsContainer *aspectContainer = aspect_getContainerForObject(self, selector);
+            [aspectContainer addAspect:identifier atPosition:position];
+
+            // Ensure the class is prepared.
+            aspect_prepareClassAndHookSelector(self, selector);
+        }
     });
     return identifier;
 }
@@ -91,6 +96,57 @@ static void aspect_performLocked(dispatch_block_t block) {
     block();
     OSSpinLockUnlock(&aspect_lock);
 }
+
+static NSString *const AspectsHasParentToken = @"__AspectsHasParentToken__";
+static BOOL aspect_isSelectorHookAllowed(Class class, SEL selector) {
+    static NSSet *disallowedSelectorList;
+    static NSMutableDictionary *swizzledClassesDict;
+    static dispatch_once_t pred;
+    dispatch_once(&pred, ^{
+        swizzledClassesDict = [NSMutableDictionary new];
+        disallowedSelectorList = [NSSet setWithObjects:@"retain", @"release", @"autorelease", @"dealloc", @"forwardInvocation:", nil];
+    });
+
+    // Check for direct matches
+    NSString *selectorName = NSStringFromSelector(selector);
+    if ([disallowedSelectorList containsObject:selectorName]) {
+        AspectLog(@"Aspects: Selector `%@` is blacklisted.", selectorName);
+        return NO;
+    }
+
+    // Search for the current class and the class hierarchy.
+    Class currentClass = class;
+    do {
+        NSSet *swizzledSelectorNames = swizzledClassesDict[currentClass];
+        if ([swizzledSelectorNames containsObject:selectorName]) {
+            if ([swizzledSelectorNames containsObject:AspectsHasParentToken]) {
+                AspectLog(@"Aspects: Error: Selector `%@` already hooked in %@. A method can only be hooked once per class hierarchy. Usually you want to hook the topmost method.", selectorName, currentClass);
+                return NO;
+            }else {
+                // Already modified and topmost!
+                return YES;
+            }
+        }
+    }while ((currentClass = class_getSuperclass(currentClass)));
+
+    // Add the selector as being modified.
+    currentClass = class;
+    do {
+        NSMutableSet *swizzledSelectorNames = swizzledClassesDict[currentClass];
+        if (!swizzledSelectorNames) {
+            swizzledSelectorNames = [NSMutableSet set];
+            swizzledClassesDict[(id<NSCopying>)currentClass] = swizzledSelectorNames;
+        }
+        [swizzledSelectorNames addObject:selectorName];
+        // All superclasses get marked as having a subclass that is modified.
+        if (class != currentClass) {
+            [swizzledSelectorNames addObject:AspectsHasParentToken];
+        }
+    }while ((currentClass = class_getSuperclass(currentClass)));
+
+    return YES;
+}
+
 
 static SEL aspect_aliasForSelector(Class class, SEL selector) {
     NSCParameterAssert(selector);

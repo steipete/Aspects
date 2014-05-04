@@ -159,11 +159,23 @@
     TestClass *testClass = [TestClass new];
     CGRect rect = [testClass testThatReturnsAStruct];
     [testClass aspect_hookSelector:@selector(testThatReturnsAStruct) atPosition:AspectPositionAfter withBlock:^(id object, NSArray *arguments) {
-
     }];
 
     CGRect rectHooked = [testClass testThatReturnsAStruct];
     XCTAssertTrue(CGRectEqualToRect(rect, rectHooked), @"Must be equal");
+}
+
+- (void)testHookReleaseIsNotAllowed {
+    TestClass *testClass = [TestClass new];
+
+    __block BOOL testCallCalled = NO;
+    id token = [testClass aspect_hookSelector:NSSelectorFromString(@"release") atPosition:AspectPositionAfter withBlock:^(id object, NSArray *arguments) {
+        testCallCalled = YES;
+    }];
+    XCTAssertNil(token, @"Token must be nil");
+
+    [testClass testCall];
+    XCTAssertFalse(testCallCalled, @"Calling testCallAndExecuteBlock must NOT call testCall");
 }
 
 - (void)testKVOCoexistance {
@@ -267,6 +279,52 @@
     [testClass performSelector:NSSelectorFromString(@"non_existing_selector")];
 #pragma clang diagnostic pop
     XCTAssertTrue(testClass.forwardInvocationCalled, @"Must have called custom forwardInvocation:");
+}
+
+@end
+
+///////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark - Test Selector Mangling
+
+@interface A : NSObject
+- (void)foo;
+@end
+
+@implementation A
+- (void)foo {
+    NSLog(@"%s", __PRETTY_FUNCTION__);
+}
+@end
+
+@interface B : A @end
+
+@implementation B
+- (void)foo {
+    NSLog(@"%s", __PRETTY_FUNCTION__);
+    [super foo];
+}
+@end
+
+@interface AspectsSelectorTests : XCTestCase @end
+@implementation AspectsSelectorTests
+
+- (void)testSelectorMangling {
+    __block BOOL A_aspect_called = NO;
+    __block BOOL B_aspect_called = NO;
+    [B aspect_hookSelector:@selector(foo) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
+        NSLog(@"before -[B foo]");
+        B_aspect_called = YES;
+    }];
+    [A aspect_hookSelector:@selector(foo) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
+        NSLog(@"before -[A foo]");
+        A_aspect_called = YES;
+    }];
+
+    B *b = [B new];
+    [b foo];
+
+    XCTAssertTrue(B_aspect_called, @"B aspect should be called");
+    XCTAssertFalse(A_aspect_called, @"B aspect should not be called");
 }
 
 @end
