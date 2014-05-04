@@ -308,44 +308,44 @@
 @interface AspectsSelectorTests : XCTestCase @end
 @implementation AspectsSelectorTests
 
-- (void)testSelectorMangling {
-    __block BOOL A_aspect_called = NO;
-    __block BOOL B_aspect_called = NO;
-    [B aspect_hookSelector:@selector(foo) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
-        NSLog(@"before -[B foo]");
-        B_aspect_called = YES;
-    }];
-    [A aspect_hookSelector:@selector(foo) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
-        NSLog(@"before -[A foo]");
-        A_aspect_called = YES;
-    }];
-
-    B *b = [B new];
-    [b foo];
-
-    XCTAssertTrue(B_aspect_called, @"B aspect should be called");
-    XCTAssertFalse(A_aspect_called, @"A aspect should not be called");
-}
-
-// TODO: Since tests change the runtime, it's hard to clean up.
-//- (void)testSelectorMangling2 {
+//- (void)testSelectorMangling {
 //    __block BOOL A_aspect_called = NO;
 //    __block BOOL B_aspect_called = NO;
-//    [A aspect_hookSelector:@selector(foo) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
-//        NSLog(@"before -[A foo]");
-//        A_aspect_called = YES;
-//    }];
 //    [B aspect_hookSelector:@selector(foo) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
 //        NSLog(@"before -[B foo]");
 //        B_aspect_called = YES;
+//    }];
+//    [A aspect_hookSelector:@selector(foo) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
+//        NSLog(@"before -[A foo]");
+//        A_aspect_called = YES;
 //    }];
 //
 //    B *b = [B new];
 //    [b foo];
 //
-//    // TODO: A is not yet called, we can't detect the target IMP for an invocation.
-//    //XCTAssertTrue(A_aspect_called, @"A aspect should be called");
-//    XCTAssertFalse(B_aspect_called, @"B aspect should not be called");
+//    XCTAssertTrue(B_aspect_called, @"B aspect should be called");
+//    XCTAssertFalse(A_aspect_called, @"A aspect should not be called");
 //}
+
+// TODO: Since tests change the runtime, it's hard to clean up.
+- (void)testSelectorMangling2 {
+    __block BOOL A_aspect_called = NO;
+    __block BOOL B_aspect_called = NO;
+    [A aspect_hookSelector:@selector(foo) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
+        NSLog(@"before -[A foo]");
+        A_aspect_called = YES;
+    }];
+    [B aspect_hookSelector:@selector(foo) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
+        NSLog(@"before -[B foo]");
+        B_aspect_called = YES;
+    }];
+
+    B *b = [B new];
+    [b foo];
+
+    // TODO: A is not yet called, we can't detect the target IMP for an invocation.
+    XCTAssertTrue(A_aspect_called, @"A aspect should be called");
+    XCTAssertFalse(B_aspect_called, @"B aspect should not be called");
+}
 
 @end

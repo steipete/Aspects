@@ -289,26 +289,37 @@ static void __ASPECTS_ARE_BEING_CALLED__(id<NSObject> self, SEL selector, NSInvo
     NSCParameterAssert(invocation);
 	SEL aliasSelector = aspect_aliasForSelector(invocation.selector);
     AspectsContainer *objectContainer = objc_getAssociatedObject(self, aliasSelector);
-    AspectsContainer *classContainer  = objc_getAssociatedObject(self.class, aliasSelector);
+
+    // We have to collect all class aspects from the class hierarchy.
+    NSMutableArray *beforeClassAspects = [NSMutableArray array];
+    NSMutableArray *insteadClassAspects = [NSMutableArray array];
+    NSMutableArray *afterClassAspects = [NSMutableArray array];
+    Class class = object_getClass(self);
+    do {
+        AspectsContainer *classContainer  = objc_getAssociatedObject(class, aliasSelector);
+        [beforeClassAspects addObjectsFromArray:classContainer.beforeAspects];
+        [insteadClassAspects addObjectsFromArray:classContainer.insteadAspects];
+        [afterClassAspects addObjectsFromArray:classContainer.afterAspects];
+    }while ((class = class_getSuperclass(class)));
 
     // Before hooks.
     NSArray *arguments = nil;
-    if (objectContainer.hasAspects || classContainer.hasAspects) {
+    if (objectContainer.hasAspects || beforeClassAspects.count || insteadClassAspects.count || afterClassAspects.count) {
         // Only collect the arguments if there are hooks to call.
         arguments = invocation.aspects_arguments;
-        aspect_invoke(classContainer.beforeAspects, arguments);
+        aspect_invoke(beforeClassAspects, arguments);
         aspect_invoke(objectContainer.beforeAspects, arguments);
     }
 
     // Instead hooks.
     BOOL respondsToAlias = YES;
-    if (objectContainer.insteadAspects.count || classContainer.insteadAspects.count) {
+    if (objectContainer.insteadAspects.count || insteadClassAspects.count) {
         invocation.selector = aliasSelector;
         NSArray *argumentsWithInvocation = [arguments arrayByAddingObject:invocation];
-        aspect_invoke(classContainer.insteadAspects, argumentsWithInvocation);
+        aspect_invoke(insteadClassAspects, argumentsWithInvocation);
         aspect_invoke(objectContainer.insteadAspects, argumentsWithInvocation);
     }else {
-        Class class = object_getClass(invocation.target);
+        class = object_getClass(invocation.target);
         do {
             if ((respondsToAlias = [class instancesRespondToSelector:aliasSelector])) {
                 invocation.selector = aliasSelector;
@@ -321,7 +332,7 @@ static void __ASPECTS_ARE_BEING_CALLED__(id<NSObject> self, SEL selector, NSInvo
     }
 
     // After hooks.
-    aspect_invoke(classContainer.afterAspects, arguments);
+    aspect_invoke(afterClassAspects, arguments);
     aspect_invoke(objectContainer.afterAspects, arguments);
 
     // If no hooks are installed, call original implementation (usually to throw an exception)
