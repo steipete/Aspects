@@ -154,6 +154,7 @@ Version 1.1.0 (Upcoming)
 - Fixes infinite loop if the same method is hooked for multiple classes. Hooking will only work for one class in the hierarchy.
 - Additional checks to prevent things like hooking retain/release/autorelease or forwardInvocation:
 - The original implementation of forwardInvocation is now correctly preserved.
+- Classes are properly cleaned up and restored to the original state after the last hook is deregistered.
 - Lots and lots of new test cases!
 
 Version 1.0.1

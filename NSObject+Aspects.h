@@ -30,6 +30,8 @@ typedef NS_ENUM(NSUInteger, AspectPosition) {
 + (id)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block;
 
 /// Unregister an aspect.
+/// @note This is a single method that works for both object and class-based hooks, as all required state is preserved in the opaque aspect token.
+/// Can also be called via `[NSObject aspect_remove:]`. The class context is not used.
 /// @return YES if deregistration is successful, otherwise NO.
 + (BOOL)aspect_remove:(id)aspect;
 
