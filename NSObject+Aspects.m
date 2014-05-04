@@ -264,7 +264,7 @@ static void aspect_hookedForwardInvocation(Class class) {
     if (originalImplementation) {
         class_addMethod(class, NSSelectorFromString(AspectsForwardInvocationSelectorName), originalImplementation, "v@:@");
     }
-    AspectLog(@"Aspects: %@ is now aspect aware.", class);
+    AspectLog(@"Aspects: %@ is now aspect aware.", NSStringFromClass(class));
 }
 
 static void aspect_hookedGetClass(Class class, Class statedClass) {
