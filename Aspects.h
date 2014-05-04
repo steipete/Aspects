@@ -54,4 +54,5 @@ typedef NS_ENUM(NSUInteger, AspectsErrorCode) {
     AspectsErrorFailedToAllocateClassPair,             /// The runtime failed creating a class pair.
     AspectsErrorRemoveObjectAlreadyDeallocated = 100   /// (for removing) The object hooked is already deallocated.
 };
+
 extern NSString *const AspectsErrorDomain;
