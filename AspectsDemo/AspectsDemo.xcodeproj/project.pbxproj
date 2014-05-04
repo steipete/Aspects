@@ -19,7 +19,7 @@
 		78573F1019155A2E000D3B00 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 78573EF819155A2E000D3B00 /* UIKit.framework */; };
 		78573F1819155A2E000D3B00 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 78573F1619155A2E000D3B00 /* InfoPlist.strings */; };
 		78573F1A19155A2E000D3B00 /* AspectsDemoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 78573F1919155A2E000D3B00 /* AspectsDemoTests.m */; };
-		78573F2519155A74000D3B00 /* NSObject+Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 78573F2319155A74000D3B00 /* NSObject+Aspects.m */; };
+		78573F2519155A74000D3B00 /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 78573F2319155A74000D3B00 /* Aspects.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,8 +49,8 @@
 		78573F1519155A2E000D3B00 /* AspectsDemoTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "AspectsDemoTests-Info.plist"; sourceTree = "<group>"; };
 		78573F1719155A2E000D3B00 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		78573F1919155A2E000D3B00 /* AspectsDemoTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AspectsDemoTests.m; sourceTree = "<group>"; };
-		78573F2319155A74000D3B00 /* NSObject+Aspects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSObject+Aspects.m"; path = "../../NSObject+Aspects.m"; sourceTree = "<group>"; };
-		78573F2419155A74000D3B00 /* NSObject+Aspects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSObject+Aspects.h"; path = "../../NSObject+Aspects.h"; sourceTree = "<group>"; };
+		78573F2319155A74000D3B00 /* Aspects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Aspects.m; path = ../../Aspects.m; sourceTree = "<group>"; };
+		78573F2419155A74000D3B00 /* Aspects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Aspects.h; path = ../../Aspects.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,8 +110,8 @@
 		78573EFA19155A2E000D3B00 /* AspectsDemo */ = {
 			isa = PBXGroup;
 			children = (
-				78573F2319155A74000D3B00 /* NSObject+Aspects.m */,
-				78573F2419155A74000D3B00 /* NSObject+Aspects.h */,
+				78573F2319155A74000D3B00 /* Aspects.m */,
+				78573F2419155A74000D3B00 /* Aspects.h */,
 				78573F0319155A2E000D3B00 /* AspectsAppDelegate.h */,
 				78573F0419155A2E000D3B00 /* AspectsAppDelegate.m */,
 				78573F0619155A2E000D3B00 /* Images.xcassets */,
@@ -246,7 +246,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				78573F0519155A2E000D3B00 /* AspectsAppDelegate.m in Sources */,
-				78573F2519155A74000D3B00 /* NSObject+Aspects.m in Sources */,
+				78573F2519155A74000D3B00 /* Aspects.m in Sources */,
 				78573F0119155A2E000D3B00 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -1,5 +1,5 @@
 //
-//  NSObject+Aspects.h
+//  Aspects.h
 //  Aspects
 //
 //  Copyright (c) 2014 Peter Steinberger. Licensed under the MIT license.

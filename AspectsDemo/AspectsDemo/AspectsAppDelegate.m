@@ -7,7 +7,7 @@
 //
 
 #import "AspectsAppDelegate.h"
-#import "NSObject+Aspects.h"
+#import "Aspects.h"
 
 @implementation AspectsAppDelegate
 

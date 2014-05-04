@@ -116,7 +116,7 @@ Installation
 ------------
 The simplest option is to use `pod "Aspects"`.
 
-You can also add the two files NSObject+Aspects.h/m. There are no further requirements.
+You can also add the two files Aspects.h/m. There are no further requirements.
 
 Compatibility and Limitations
 -----------------------------

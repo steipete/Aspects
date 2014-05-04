@@ -1,11 +1,11 @@
 //
-//  NSObject+Aspects.m
+//  Aspects.m
 //  Aspects
 //
 //  Copyright (c) 2014 Peter Steinberger. Licensed under the MIT license.
 //
 
-#import "NSObject+Aspects.h"
+#import "Aspects.h"
 #import <libkern/OSAtomic.h>
 #import <objc/runtime.h>
 #import <objc/message.h>
@@ -79,7 +79,7 @@ static id aspect_add(id<NSObject> self, SEL selector, AspectPosition position, v
 
 static BOOL aspect_remove(AspectIdentifier *aspect) {
     if (![aspect isKindOfClass:AspectIdentifier.class]) {
-        AspectLog(@"Aspect: Invalid object given to aspect_remove: %@", aspect);
+        AspectLog(@"Aspects: Invalid object given to aspect_remove: %@", aspect);
         return NO;
     }
 
@@ -91,6 +91,8 @@ static BOOL aspect_remove(AspectIdentifier *aspect) {
             success = [aspectContainer removeAspect:aspect];
 
             aspect_cleanupHookedClassAndSelector(object, aspect.selector);
+        }else {
+            AspectLog(@"Aspects: Unable to deregister hook. Object already deallocated: %@", aspect);
         }
     });
     return success;
