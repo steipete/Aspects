@@ -92,15 +92,15 @@ static void aspect_performLocked(dispatch_block_t block) {
     OSSpinLockUnlock(&aspect_lock);
 }
 
-static SEL aspect_aliasForSelector(SEL selector) {
+static SEL aspect_aliasForSelector(Class class, SEL selector) {
     NSCParameterAssert(selector);
-	return NSSelectorFromString([AspectMessagePrefix stringByAppendingString:NSStringFromSelector(selector)]);
+	return NSSelectorFromString([AspectMessagePrefix stringByAppendingFormat:@"_%@_%@", class, NSStringFromSelector(selector)]);
 }
 
 // Loads or creates the aspect container.
-static AspectsContainer *aspect_getContainerForObject(id object, SEL selector) {
+static AspectsContainer *aspect_getContainerForObject(id<NSObject> object, SEL selector) {
     NSCParameterAssert(object);
-    SEL aliasSelector = aspect_aliasForSelector(selector);
+    SEL aliasSelector = aspect_aliasForSelector(object.class, selector);
     AspectsContainer *aspectContainer = objc_getAssociatedObject(object, aliasSelector);
     if (!aspectContainer) {
         aspectContainer = [AspectsContainer new];
@@ -109,7 +109,7 @@ static AspectsContainer *aspect_getContainerForObject(id object, SEL selector) {
     return aspectContainer;
 }
 
-static void aspect_prepareClassAndHookSelector(id object, SEL selector) {
+static void aspect_prepareClassAndHookSelector(id<NSObject> object, SEL selector) {
     NSCParameterAssert(selector);
     Class class = aspect_hookClass(object);
     Method targetMethod = class_getInstanceMethod(class, selector);
@@ -122,17 +122,17 @@ static void aspect_prepareClassAndHookSelector(id object, SEL selector) {
 
         // Make a method alias for the existing method implementation.
         const char *typeEncoding = method_getTypeEncoding(targetMethod);
-        SEL aliasSelector = aspect_aliasForSelector(selector);
+        SEL aliasSelector = aspect_aliasForSelector(object.class, selector);
         __unused BOOL addedAlias = class_addMethod(class, aliasSelector, method_getImplementation(targetMethod), typeEncoding);
         NSCAssert(addedAlias, @"Original implementation for %@ is already copied to %@ on %@", NSStringFromSelector(selector), NSStringFromSelector(aliasSelector), class);
 
         // We use forwardInvocation to hook in.
         IMP msgForwardIMP = _objc_msgForward;
 #if !defined(__arm64__)
-        // As an ugly internal runtime implementation detail in the 32bit runtime, we need to determine of the method we hook returns a struct or anything larger than double.
+        // As an ugly internal runtime implementation detail in the 32bit runtime, we need to determine of the method we hook returns a struct or anything larger than id.
         // https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/LowLevelABI/000-Introduction/introduction.html
-        NSMethodSignature *signature = [object methodSignatureForSelector:selector];
-        if (*typeEncoding == '{' || signature.methodReturnLength > sizeof(double)) {
+        NSMethodSignature *signature = [(id)object methodSignatureForSelector:selector];
+        if (signature.methodReturnLength > sizeof(id)) {
             msgForwardIMP = (IMP)_objc_msgForward_stret;
         }
 #endif
@@ -202,9 +202,13 @@ static Class aspect_hookClassInPlace(Class class) {
     return class;
 }
 
+static NSString *const AspectsForwardInvocationSelectorName = @"__aspects_forwardInvocation:";
 static void aspect_hookedForwardInvocation(Class class) {
     NSCParameterAssert(class);
-    class_replaceMethod(class, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, "v@:@");
+    IMP originalImplementation = class_replaceMethod(class, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, "v@:@");
+    if (originalImplementation) {
+        class_addMethod(class, NSSelectorFromString(AspectsForwardInvocationSelectorName), originalImplementation, "v@:@");
+    }
     AspectLog(@"Aspects: %@ is now aspect aware.", class);
 }
 
@@ -228,7 +232,7 @@ static void aspect_hookedGetClass(Class class, Class statedClass) {
 static void __ASPECTS_ARE_BEING_CALLED__(id<NSObject> self, SEL selector, NSInvocation *invocation) {
     NSCParameterAssert(self);
     NSCParameterAssert(invocation);
-	SEL aliasSelector = aspect_aliasForSelector(invocation.selector);
+	SEL aliasSelector = aspect_aliasForSelector(self.class, invocation.selector);
     AspectsContainer *objectContainer = objc_getAssociatedObject(self, aliasSelector);
     AspectsContainer *classContainer  = objc_getAssociatedObject(self.class, aliasSelector);
 
@@ -262,19 +266,14 @@ static void __ASPECTS_ARE_BEING_CALLED__(id<NSObject> self, SEL selector, NSInvo
 
     // If no hooks are installed, call original implementation (usually to throw an exception)
     if (!respondsToAlias) {
-        SEL forwardInvocationSEL = @selector(forwardInvocation:);
-        Method forwardInvocationMethod = class_getInstanceMethod(self.class, forwardInvocationSEL);
-
-        // Preserve any existing implementation of -forwardInvocation:.
-        void (*originalForwardInvocation)(id, SEL, NSInvocation *) = NULL;
-        if (forwardInvocationMethod != NULL) {
-            originalForwardInvocation = (__typeof__(originalForwardInvocation))method_getImplementation(forwardInvocationMethod);
-        }
-
-        if (originalForwardInvocation == NULL) {
+        SEL aspectsForwardInvocationSEL = NSSelectorFromString(AspectsForwardInvocationSelectorName);
+        if ([self respondsToSelector:aspectsForwardInvocationSEL]) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+            [self performSelector:aspectsForwardInvocationSEL withObject:invocation];
+#pragma clang diagnostic pop
+        }else {
             [(id)self doesNotRecognizeSelector:invocation.selector];
-        } else {
-            originalForwardInvocation(self, forwardInvocationSEL, invocation);
         }
     }
 }

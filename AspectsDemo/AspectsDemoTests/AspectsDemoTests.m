@@ -32,9 +32,9 @@
 
 @end
 
-@interface AspectsDemoTests : XCTestCase @end
+@interface AspectsTests : XCTestCase @end
 
-@implementation AspectsDemoTests
+@implementation AspectsTests
 
 - (void)testInsteadHook {
     // Test object replacement for UILabel.
@@ -217,6 +217,56 @@
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     NSLog(@"KVO!");
     ((TestClass *)object).kvoTestCalled = YES;
+}
+
+@end
+
+///////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark - Test that a custom forwardInvocation: is being called.
+
+@interface TestWithCustomForwardInvocation : NSObject
+@property (nonatomic, assign) BOOL forwardInvocationCalled;
+- (void)test;
+@end
+
+@implementation TestWithCustomForwardInvocation
+
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)aSelector {
+    if (aSelector == NSSelectorFromString(@"non_existing_selector")) {
+        return [NSMethodSignature signatureWithObjCTypes:"v@:"];
+    }
+    return [super methodSignatureForSelector:aSelector];
+}
+
+- (void)forwardInvocation:(NSInvocation *)anInvocation {
+    NSLog(@"Custom!!!");
+    self.forwardInvocationCalled = YES;
+    if (anInvocation.selector != NSSelectorFromString(@"non_existing_selector")) {
+        [super forwardInvocation:anInvocation];
+    }
+}
+
+- (void)test {
+    NSLog(@"%s", __PRETTY_FUNCTION__);
+}
+
+@end
+
+@interface AspectsForwardInvocationTests : XCTestCase @end
+@implementation AspectsForwardInvocationTests
+
+- (void)testEnsureForwardInvocationIsCalled {
+    TestWithCustomForwardInvocation *testClass = [TestWithCustomForwardInvocation new];
+    XCTAssertFalse(testClass.forwardInvocationCalled, @"Must have not called custom forwardInvocation:");
+    [TestWithCustomForwardInvocation aspect_hookSelector:@selector(test) atPosition:AspectPositionInstead withBlock:^(id object, NSArray *arguments) {
+        NSLog(@"Aspect hook called");
+    }];
+    [testClass test];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+    [testClass performSelector:NSSelectorFromString(@"non_existing_selector")];
+#pragma clang diagnostic pop
+    XCTAssertTrue(testClass.forwardInvocationCalled, @"Must have called custom forwardInvocation:");
 }
 
 @end
