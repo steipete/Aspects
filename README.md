@@ -59,13 +59,21 @@ You can check if methods are really being called in your test cases:
     __block BOOL testCallCalled = NO;
     [testClass aspect_hookSelector:@selector(testCall) atPosition:AspectPositionAfter withBlock:^(id object, NSArray *arguments) {
         testCallCalled = YES;
-    }];
+    } error:NULL];
 
     [testClass2 testCallAndExecuteBlock:^{
         [testClass testCall];
-    }];
+    } error:NULL];
     XCTAssertTrue(testCallCalled, @"Calling testCallAndExecuteBlock must call testCall");
 }
+```
+-------------------
+It can be really useful for debugging. Here I was curious when exactly the tap gesture changed state:
+
+``` objc
+[_singleTapGesture aspect_hookSelector:@selector(setState:) atPosition:AspectPositionAfter withBlock:^(__unsafe_unretained id object, NSArray *arguments) {
+    NSLog(@"%@: %@", object, arguments);
+} error:NULL];
 ```
 
 -------------------
@@ -83,7 +91,7 @@ Another convenient use case is adding handlers for classes that you don't own. I
         if (weakSelf.isBeingDismissed) {
             action();
         }
-    }];
+    } error:NULL];
 }
 
 @end
@@ -112,7 +120,7 @@ When you're using Aspects with `AspectPositionInstead`, the last argument of the
             processTouches = pspdf_stylusShouldProcessTouches(arguments[0], arguments[1]);
             [invocation setReturnValue:&processTouches];
         }
-    }];
+    } error:NULL];
 ```
 
 Installation
