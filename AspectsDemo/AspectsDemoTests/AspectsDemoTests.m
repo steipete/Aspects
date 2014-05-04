@@ -175,7 +175,37 @@
     XCTAssertNil(token, @"Token must be nil");
 
     [testClass testCall];
-    XCTAssertFalse(testCallCalled, @"Calling testCallAndExecuteBlock must NOT call testCall");
+    XCTAssertFalse(testCallCalled, @"Release should not be hookable");
+}
+
+// Hooking for deallic is delicate, but should work for AspectPositionBefore and AspectPositionAfter.
+- (void)testDeallocHooking {
+    TestClass *testClass = [TestClass new];
+
+    __block BOOL testCallCalled = NO;
+    id token = [testClass aspect_hookSelector:NSSelectorFromString(@"dealloc") atPosition:AspectPositionAfter withBlock:^(__unsafe_unretained id object, NSArray *arguments) {
+        testCallCalled = YES;
+        NSLog(@"called from dealloc");
+    }];
+    XCTAssertNotNil(token, @"Must return a token.");
+
+    testClass = nil;
+    XCTAssertTrue(testCallCalled, @"Dealloc-hook must work.");
+}
+
+// Replacing dealloc should not work.
+- (void)testDeallocReplacing {
+    TestClass *testClass = [TestClass new];
+
+    __block BOOL testCallCalled = NO;
+    id token = [testClass aspect_hookSelector:NSSelectorFromString(@"dealloc") atPosition:AspectPositionInstead withBlock:^(__unsafe_unretained id object, NSArray *arguments) {
+        testCallCalled = YES;
+        NSLog(@"called from dealloc");
+    }];
+    XCTAssertNil(token, @"Must NOT return a token.");
+
+    testClass = nil;
+    XCTAssertFalse(testCallCalled, @"Dealloc-hook must not work.");
 }
 
 - (void)testKVOCoexistance {

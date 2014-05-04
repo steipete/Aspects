@@ -24,10 +24,10 @@ typedef NS_ENUM(NSUInteger, AspectPosition) {
 /// Adds a block of code before/instead/after the current `selector` for a specific object.
 /// If you choose `AspectPositionInstead`, `arguments` contains an additional argument which is the original invocation.
 /// @return A token which allows to later deregister the aspect.
-- (id)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(id object, NSArray *arguments))block;
+- (id)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block;
 
 /// Hooks a selector class-wide.
-+ (id)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(id object, NSArray *arguments))block;
++ (id)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block;
 
 /// Unregister an aspect.
 /// @return YES if deregistration is successful, otherwise NO.

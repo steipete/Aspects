@@ -41,11 +41,11 @@ static NSString *const AspectMessagePrefix = @"aspects_";
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Public Aspects API
 
-+ (id)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(id object, NSArray *arguments))block {
++ (id)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block {
     return aspect_add((id<NSObject>)self, selector, position, block);
 }
 
-- (id)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(id object, NSArray *arguments))block {
+- (id)aspect_hookSelector:(SEL)selector atPosition:(AspectPosition)position withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block {
     return aspect_add(self, selector, position, block);
 }
 
@@ -56,11 +56,11 @@ static NSString *const AspectMessagePrefix = @"aspects_";
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Private Helper
 
-static id aspect_add(id<NSObject> self, SEL selector, AspectPosition position, void (^block)(id object, NSArray *arguments)) {
+static id aspect_add(id<NSObject> self, SEL selector, AspectPosition position, void (^block)(__unsafe_unretained id object, NSArray *arguments)) {
     __block AspectIdentifier *identifier = [[AspectIdentifier alloc] initWithSelector:selector object:self block:block];
 
     aspect_performLocked(^{
-        if (!aspect_isSelectorHookAllowed(self.class, selector)) {
+        if (!aspect_isSelectorHookAllowed(self.class, selector, position)) {
             identifier = nil;
         }else {
             AspectsContainer *aspectContainer = aspect_getContainerForObject(self, selector);
@@ -98,19 +98,25 @@ static void aspect_performLocked(dispatch_block_t block) {
 }
 
 static NSString *const AspectsHasParentToken = @"__AspectsHasParentToken__";
-static BOOL aspect_isSelectorHookAllowed(Class class, SEL selector) {
+static BOOL aspect_isSelectorHookAllowed(Class class, SEL selector, AspectPosition position) {
     static NSSet *disallowedSelectorList;
     static NSMutableDictionary *swizzledClassesDict;
     static dispatch_once_t pred;
     dispatch_once(&pred, ^{
         swizzledClassesDict = [NSMutableDictionary new];
-        disallowedSelectorList = [NSSet setWithObjects:@"retain", @"release", @"autorelease", @"dealloc", @"forwardInvocation:", nil];
+        disallowedSelectorList = [NSSet setWithObjects:@"retain", @"release", @"autorelease", @"forwardInvocation:", nil];
     });
 
-    // Check for direct matches
+    // Check against the blacklist.
     NSString *selectorName = NSStringFromSelector(selector);
     if ([disallowedSelectorList containsObject:selectorName]) {
         AspectLog(@"Aspects: Selector `%@` is blacklisted.", selectorName);
+        return NO;
+    }
+
+    // Additional checks.
+    if ([selectorName isEqualToString:@"dealloc"] && position == AspectPositionInstead) {
+        AspectLog(@"Aspects: dealloc can not be replaced. Use AspectPositionBefore.");
         return NO;
     }
 
@@ -284,7 +290,7 @@ static void aspect_hookedGetClass(Class class, Class statedClass) {
 #define aspect_invoke(aspects, arguments) for (AspectIdentifier *aspect in aspects) {((void (^)(id, NSArray *))aspect.block)(self, arguments); }
 
 // This is the swizzled forwardInvocation: method.
-static void __ASPECTS_ARE_BEING_CALLED__(id<NSObject> self, SEL selector, NSInvocation *invocation) {
+static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained id<NSObject> self, SEL selector, NSInvocation *invocation) {
     NSCParameterAssert(self);
     NSCParameterAssert(invocation);
 	SEL aliasSelector = aspect_aliasForSelector(invocation.selector);
@@ -328,7 +334,6 @@ static void __ASPECTS_ARE_BEING_CALLED__(id<NSObject> self, SEL selector, NSInvo
                 class = class_getSuperclass(class);
             }
         }while (!respondsToAlias && class);
-
     }
 
     // After hooks.
