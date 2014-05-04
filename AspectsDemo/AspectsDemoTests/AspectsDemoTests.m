@@ -331,14 +331,14 @@
 - (void)testSelectorMangling2 {
     __block BOOL A_aspect_called = NO;
     __block BOOL B_aspect_called = NO;
-    [A aspect_hookSelector:@selector(foo) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
+    XCTAssertNotNil([A aspect_hookSelector:@selector(foo) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
         NSLog(@"before -[A foo]");
         A_aspect_called = YES;
-    }];
-    [B aspect_hookSelector:@selector(foo) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
+    }], @"Must return a token");
+    XCTAssertNil([B aspect_hookSelector:@selector(foo) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
         NSLog(@"before -[B foo]");
         B_aspect_called = YES;
-    }];
+    }], @"Must not return a token");
 
     B *b = [B new];
     [b foo];
