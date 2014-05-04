@@ -191,7 +191,7 @@ static void aspect_cleanupHookedClassAndSelector(NSObject *self, SEL selector) {
     }
 
     // Deregister global tracked selector
-    aspect_deregisterTrackedSelector(self.class, selector);
+    aspect_deregisterTrackedSelector(self, selector);
 
     // Get the aspect container and check if there are any hooks remaining. Clean up if there are not.
     AspectsContainer *container = aspect_getContainerForObject(self, selector);
