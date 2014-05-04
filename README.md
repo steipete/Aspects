@@ -148,6 +148,14 @@ MIT licensed, Copyright (c) 2014 Peter Steinberger, steipete@gmail.com, [@steipe
 Release Notes
 -----------------
 
+Version 1.1.0 (Upcoming)
+
+- Allow hooking dealloc
+- Fixes infinite loop if the same method is hooked for multiple classes. Hooking will only work for one class in the hierarchy.
+- Additional checks to prevent things like hooking retain/release/autorelease or forwardInvocation:
+- The original implementation of forwardInvocation is now correctly preserved.
+- Lots and lots of new test cases!
+
 Version 1.0.1
 
 - Minor tweaks and documentation improvements.
