@@ -5,16 +5,16 @@
 	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
 	<false/>
 	<key>IDESourceControlProjectIdentifier</key>
-	<string>218D9387-D3F0-4707-8ED5-81A06FD7EB38</string>
+	<string>FBE87C6D-A92D-436F-AA1E-D8CC2A639EBF</string>
 	<key>IDESourceControlProjectName</key>
-	<string>AspectsDemo</string>
+	<string>AspectsDemoOSX</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
 		<key>ED3275D8-17BB-4236-BC16-031C413C4922</key>
 		<string>ssh://github.com/AshFurrow/Aspects.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>AspectsDemo/AspectsDemo.xcodeproj/project.xcworkspace</string>
+	<string>AspectsDemoOSX/AspectsDemoOSX.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>ED3275D8-17BB-4236-BC16-031C413C4922</key>
