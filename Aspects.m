@@ -132,17 +132,37 @@ static SEL aspect_aliasForSelector(SEL selector) {
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Class + Selector Preparation
 
+static BOOL aspect_isMsgForwardIMP(IMP impl) {
+    return impl != _objc_msgForward
+#if !defined(__arm64__)
+    && impl != (IMP)_objc_msgForward_stret
+#endif
+    ;
+}
+
+static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
+    IMP msgForwardIMP = _objc_msgForward;
+#if !defined(__arm64__)
+    // As an ugly internal runtime implementation detail in the 32bit runtime, we need to determine of the method we hook returns a struct or anything larger than id.
+    // https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/LowLevelABI/000-Introduction/introduction.html
+    // https://github.com/ReactiveCocoa/ReactiveCocoa/issues/783
+    // http://infocenter.arm.com/help/topic/com.arm.doc.ihi0042e/IHI0042E_aapcs.pdf (Section 5.4)
+    NSMethodSignature *signature = [self methodSignatureForSelector:selector];
+    Method method = class_getInstanceMethod(self.class, selector);
+    const char *typeSignature = method_getTypeEncoding(method);
+    if ((*typeSignature == _C_STRUCT_B) || signature.methodReturnLength > sizeof(double)) {
+        msgForwardIMP = (IMP)_objc_msgForward_stret;
+    }
+#endif
+    return msgForwardIMP;
+}
+
 static void aspect_prepareClassAndHookSelector(NSObject *self, SEL selector, NSError **error) {
     NSCParameterAssert(selector);
     Class klass = aspect_hookClass(self, error);
     Method targetMethod = class_getInstanceMethod(klass, selector);
     IMP targetMethodIMP = method_getImplementation(targetMethod);
-    if (targetMethodIMP != _objc_msgForward
-#if !defined(__arm64__)
-        && targetMethodIMP != (IMP)_objc_msgForward_stret
-#endif
-        ) {
-
+    if (aspect_isMsgForwardIMP(targetMethodIMP)) {
         // Make a method alias for the existing method implementation, it not already copied.
         const char *typeEncoding = method_getTypeEncoding(targetMethod);
         SEL aliasSelector = aspect_aliasForSelector(selector);
@@ -152,16 +172,7 @@ static void aspect_prepareClassAndHookSelector(NSObject *self, SEL selector, NSE
         }
 
         // We use forwardInvocation to hook in.
-        IMP msgForwardIMP = _objc_msgForward;
-#if !defined(__arm64__)
-        // As an ugly internal runtime implementation detail in the 32bit runtime, we need to determine of the method we hook returns a struct or anything larger than id.
-        // https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/LowLevelABI/000-Introduction/introduction.html
-        NSMethodSignature *signature = [self methodSignatureForSelector:selector];
-        if (signature.methodReturnLength > sizeof(id)) {
-            msgForwardIMP = (IMP)_objc_msgForward_stret;
-        }
-#endif
-        class_replaceMethod(klass, selector, msgForwardIMP, typeEncoding);
+        class_replaceMethod(klass, selector, aspect_getMsgForwardIMP(self, selector), typeEncoding);
         AspectLog(@"Aspects: Installed hook for -[%@ %@].", klass, NSStringFromSelector(selector));
     }
 }
@@ -180,12 +191,7 @@ static void aspect_cleanupHookedClassAndSelector(NSObject *self, SEL selector) {
     // Check if the method is marked as forwarded and undo that.
     Method targetMethod = class_getInstanceMethod(klass, selector);
     IMP targetMethodIMP = method_getImplementation(targetMethod);
-    if (targetMethodIMP == _objc_msgForward
-#if !defined(__arm64__)
-        || targetMethodIMP == (IMP)_objc_msgForward_stret
-#endif
-        ) {
-
+    if (aspect_isMsgForwardIMP(targetMethodIMP)) {
         // Restore the original method implementation.
         const char *typeEncoding = method_getTypeEncoding(targetMethod);
         SEL aliasSelector = aspect_aliasForSelector(selector);
