@@ -146,7 +146,7 @@ Because of ugly implementation details on the ObjC runtime, methods that return 
 
 Credits
 -------
-The idea to use `_objc_msgForward` and parts of the `NSInvocation` argument selection is from the excellent [ReactiveCocoa](https://github.com/ReactiveCocoa/ReactiveCocoa) from the GitHub guys.
+The idea to use `_objc_msgForward` and parts of the `NSInvocation` argument selection is from the excellent [ReactiveCocoa](https://github.com/ReactiveCocoa/ReactiveCocoa) from the GitHub guys. [This article](http://codeshaker.blogspot.co.at/2012/01/aop-delivered.html) explains how it works under the hood.
 
 
 Supported iOS & SDK Versions
