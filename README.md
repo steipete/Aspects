@@ -106,8 +106,8 @@ Aspects identifies itself nicely in the stack trace, so it's easy to see if a me
 
 <img src="https://raw.githubusercontent.com/steipete/Aspects/master/stacktrace@2x.png?token=58493__eyJzY29wZSI6IlJhd0Jsb2I6c3RlaXBldGUvQXNwZWN0cy9tYXN0ZXIvc3RhY2t0cmFjZUAyeC5wbmciLCJleHBpcmVzIjoxMzk5NzQ3OTI3fQ%3D%3D--97cf7e7bac491149eb8db3d1b9a562ab88154a3c" width="75%">
 
-Using Aspects with methods with a return type
----------------------------------------------
+Using Aspects with non-void return types
+----------------------------------------
 
 When you're using Aspects with `AspectPositionInstead`, the last argument of the `arguments` array will be the `NSInvocation` of the original implementation. You can use this invocation to customize the return value:
 
