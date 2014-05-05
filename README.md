@@ -1,4 +1,4 @@
-Aspects v1.3.0 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects)
+Aspects v1.3.1 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects)
 ==============
 
 Delightful, simple library for aspect oriented programming by [@steipete](http://twitter.com/steipete).
@@ -153,7 +153,7 @@ Supported iOS & SDK Versions
 -----------------------------
 
 * Aspects requires ARC.
-* Aspects is tested with iOS 6+.
+* Aspects is tested with iOS 6+ and OS X 10.7 or higher.
 
 License
 -------
@@ -163,7 +163,12 @@ MIT licensed, Copyright (c) 2014 Peter Steinberger, steipete@gmail.com, [@steipe
 Release Notes
 -----------------
 
+Version 1.3.1
+
+- Add support for OS X 10.7 or higher. (thanks to @ashfurrow)
+
 Version 1.3.0
+
 - Add automatic deregistration.
 - Checks if the selector exists before trying to hook.
 - Improved dealloc hooking. (no more unsafe_unretained needed)
