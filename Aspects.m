@@ -109,6 +109,10 @@ static BOOL aspect_remove(AspectIdentifier *aspect, NSError **error) {
             success = [aspectContainer removeAspect:aspect];
 
             aspect_cleanupHookedClassAndSelector(self, aspect.selector);
+            // destroy token
+            aspect.object = nil;
+            aspect.block = nil;
+            aspect.selector = NULL;
         }else {
             NSString *errrorDesc = [NSString stringWithFormat:@"Unable to deregister hook. Object already deallocated: %@", aspect];
             AspectError(AspectsErrorRemoveObjectAlreadyDeallocated, errrorDesc);
@@ -191,7 +195,7 @@ static void aspect_cleanupHookedClassAndSelector(NSObject *self, SEL selector) {
     // Check if the method is marked as forwarded and undo that.
     Method targetMethod = class_getInstanceMethod(klass, selector);
     IMP targetMethodIMP = method_getImplementation(targetMethod);
-    if (!aspect_isMsgForwardIMP(targetMethodIMP)) {
+    if (aspect_isMsgForwardIMP(targetMethodIMP)) {
         // Restore the original method implementation.
         const char *typeEncoding = method_getTypeEncoding(targetMethod);
         SEL aliasSelector = aspect_aliasForSelector(selector);
