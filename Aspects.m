@@ -12,18 +12,20 @@
 
 #define AspectLog(...)
 //#define AspectLog(...) do { NSLog(__VA_ARGS__); }while(0)
+#define AspectLogError(...) do { NSLog(__VA_ARGS__); }while(0)
 
 // Tracks a single aspect.
 @interface AspectIdentifier : NSObject
-- (id)initWithSelector:(SEL)selector object:(id)object block:(id)block;
+- (id)initWithSelector:(SEL)selector object:(id)object options:(AspectOptions)options block:(id)block;
 @property (nonatomic, assign) SEL selector;
 @property (nonatomic, strong) id block;
 @property (nonatomic, weak) id object;
+@property (nonatomic, assign) AspectOptions options;
 @end
 
 // Tracks all aspects for an object/class.
 @interface AspectsContainer : NSObject
-- (void)addAspect:(AspectIdentifier *)aspect atPosition:(AspectPosition)injectPosition;
+- (void)addAspect:(AspectIdentifier *)aspect withOptions:(AspectOptions)injectPosition;
 - (BOOL)removeAspect:(id)aspect;
 - (BOOL)hasAspects;
 @property (atomic, copy) NSArray *beforeAspects;
@@ -42,8 +44,12 @@
 - (NSArray *)aspects_arguments;
 @end
 
+typedef void(^AspectBlock)(id instance, NSArray *arguments);
+
+#define AspectPositionFilter 0x07
+
 #define AspectError(errorCode, errorDescription) do { \
-AspectLog(@"Aspects: %@", errorDescription); \
+AspectLogError(@"Aspects: %@", errorDescription); \
 if (error) { *error = [NSError errorWithDomain:AspectsErrorDomain code:errorCode userInfo:@{NSLocalizedDescriptionKey: errorDescription}]; }}while(0)
 
 NSString *const AspectsErrorDomain = @"AspectsErrorDomain";
@@ -55,34 +61,35 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Public Aspects API
 
-+ (id)aspect_hookSelector:(SEL)selector
-               atPosition:(AspectPosition)position
-                withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block
-                    error:(NSError **)error {
-    return aspect_add((id)self, selector, position, block, error);
++ (id<Aspect>)aspect_hookSelector:(SEL)selector
+                      withOptions:(AspectOptions)options
+                       usingBlock:(AspectBlock)block
+                            error:(NSError **)error {
+    return aspect_add((id)self, selector, options, block, error);
 }
 
-- (id)aspect_hookSelector:(SEL)selector
-               atPosition:(AspectPosition)position
-                withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block
-                    error:(NSError **)error {
-    return aspect_add(self, selector, position, block, error);
+/// @return A token which allows to later deregister the aspect.
+- (id<Aspect>)aspect_hookSelector:(SEL)selector
+                      withOptions:(AspectOptions)options
+                       usingBlock:(AspectBlock)block
+                            error:(NSError **)error {
+    return aspect_add(self, selector, options, block, error);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Private Helper
 
-static id aspect_add(id self, SEL selector, AspectPosition position, void (^block)(__unsafe_unretained id object, NSArray *arguments), NSError **error) {
+static id aspect_add(id self, SEL selector, AspectOptions options, AspectBlock block, NSError **error) {
     NSCParameterAssert(self);
     NSCParameterAssert(selector);
     NSCParameterAssert(block);
 
     __block AspectIdentifier *identifier = nil;
     aspect_performLocked(^{
-        if (aspect_isSelectorAllowedAndTrack(self, selector, position, error)) {
+        if (aspect_isSelectorAllowedAndTrack(self, selector, options, error)) {
             AspectsContainer *aspectContainer = aspect_getContainerForObject(self, selector);
-            identifier = [[AspectIdentifier alloc] initWithSelector:selector object:self block:block];;
-            [aspectContainer addAspect:identifier atPosition:position];
+            identifier = [[AspectIdentifier alloc] initWithSelector:selector object:self options:options block:block];
+            [aspectContainer addAspect:identifier withOptions:options];
 
             // Modify the class to allow message interception.
             aspect_prepareClassAndHookSelector(self, selector, error);
@@ -337,7 +344,13 @@ static void aspect_undoSwizzleClassInPlace(Class klass) {
 #pragma mark - Aspect Invoke Point
 
 // This is a macro so we get a cleaner stack trace.
-#define aspect_invoke(aspects, arguments) for (AspectIdentifier *aspect in aspects) {((void (^)(id, NSArray *))aspect.block)(self, arguments); }
+#define aspect_invoke(aspects, arguments) \
+for (AspectIdentifier *aspect in aspects) {\
+    ((void (^)(id, NSArray *))aspect.block)(self, arguments);\
+    if (aspect.options & AspectOptionAutomaticRemoval) { \
+        aspectsToRemove = [aspectsToRemove?:@[] arrayByAddingObject:aspect]; \
+    } \
+}
 
 // This is the swizzled forwardInvocation: method.
 static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL selector, NSInvocation *invocation) {
@@ -346,6 +359,7 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
 	SEL aliasSelector = aspect_aliasForSelector(invocation.selector);
     AspectsContainer *objectContainer = objc_getAssociatedObject(self, aliasSelector);
     AspectsContainer *classContainer = aspect_getContainerForClass(object_getClass(self), aliasSelector);
+    NSArray *aspectsToRemove = nil;
 
     // Before hooks.
     NSArray *arguments = nil;
@@ -380,16 +394,16 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
 
     // If no hooks are installed, call original implementation (usually to throw an exception)
     if (!respondsToAlias) {
-        SEL aspectsForwardInvocationSEL = NSSelectorFromString(AspectsForwardInvocationSelectorName);
-        if ([self respondsToSelector:aspectsForwardInvocationSEL]) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-            [self performSelector:aspectsForwardInvocationSEL withObject:invocation];
-#pragma clang diagnostic pop
+        SEL originalForwardInvocationSEL = NSSelectorFromString(AspectsForwardInvocationSelectorName);
+        if ([self respondsToSelector:originalForwardInvocationSEL]) {
+            ((void( *)(id, SEL, NSInvocation *))objc_msgSend)(self, originalForwardInvocationSEL, invocation);
         }else {
             [self doesNotRecognizeSelector:invocation.selector];
         }
     }
+
+    // Remove any hooks that are queued for deregistration.
+    [aspectsToRemove makeObjectsPerformSelector:@selector(remove)];
 }
 #undef aspect_invoke
 
@@ -437,7 +451,7 @@ static NSMutableDictionary *aspect_getSwizzledClassesDict() {
     return swizzledClassesDict;
 }
 
-static BOOL aspect_isSelectorAllowedAndTrack(id self, SEL selector, AspectPosition position, NSError **error) {
+static BOOL aspect_isSelectorAllowedAndTrack(NSObject *self, SEL selector, AspectOptions options, NSError **error) {
     static NSSet *disallowedSelectorList;
     static dispatch_once_t pred;
     dispatch_once(&pred, ^{
@@ -447,15 +461,22 @@ static BOOL aspect_isSelectorAllowedAndTrack(id self, SEL selector, AspectPositi
     // Check against the blacklist.
     NSString *selectorName = NSStringFromSelector(selector);
     if ([disallowedSelectorList containsObject:selectorName]) {
-        NSString *errorDescription = [NSString stringWithFormat:@"Selector `%@` is blacklisted.", selectorName];
+        NSString *errorDescription = [NSString stringWithFormat:@"Selector %@ is blacklisted.", selectorName];
         AspectError(AspectsErrorSelectorBlacklisted, errorDescription);
         return NO;
     }
 
     // Additional checks.
-    if ([selectorName isEqualToString:@"dealloc"] && position == AspectPositionInstead) {
-        NSString *errorDescription = @"dealloc can not be replaced. Use AspectPositionBefore.";
-        AspectError(AspectsErrorSelectorDeallocPosition, errorDescription);
+    AspectOptions position = options&AspectPositionFilter;
+    if ([selectorName isEqualToString:@"dealloc"] && position != AspectPositionBefore) {
+        NSString *errorDesc = @"AspectPositionBefore is the only valid position when hooking dealloc.";
+        AspectError(AspectsErrorSelectorDeallocPosition, errorDesc);
+        return NO;
+    }
+
+    if (![self respondsToSelector:selector] && ![self.class instancesRespondToSelector:selector]) {
+        NSString *errorDesc = [NSString stringWithFormat:@"Unable to find selector -[%@ %@].", NSStringFromClass(self.class), selectorName];
+        AspectError(AspectsErrorDoesNotRespondToSelector, errorDesc);
         return NO;
     }
 
@@ -624,19 +645,20 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
 
 @implementation AspectIdentifier
 
-- (id)initWithSelector:(SEL)selector object:(id)object block:(id)block {
+- (id)initWithSelector:(SEL)selector object:(id)object options:(AspectOptions)options block:(id)block {
     NSCParameterAssert(block);
     NSCParameterAssert(selector);
     if (self = [super init]) {
         _selector = selector;
         _block = block;
+        _options = options;
         _object = object; // weak
     }
     return self;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p, SEL:%@ object:%@ block:%@>", self.class, self, NSStringFromSelector(self.selector), self.object, self.block];
+    return [NSString stringWithFormat:@"<%@: %p, SEL:%@ object:%@ options:%tu block:%@>", self.class, self, NSStringFromSelector(self.selector), self.object, self.options, self.block];
 }
 
 - (BOOL)remove {
@@ -654,8 +676,9 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
     return self.beforeAspects.count > 0 || self.insteadAspects.count > 0 || self.afterAspects.count > 0;
 }
 
-- (void)addAspect:(AspectIdentifier *)aspect atPosition:(AspectPosition)injectPosition {
-    switch (injectPosition) {
+- (void)addAspect:(AspectIdentifier *)aspect withOptions:(AspectOptions)options {
+    NSUInteger position = options&AspectPositionFilter;
+    switch (position) {
         case AspectPositionBefore:  self.beforeAspects  = [(self.beforeAspects ?:@[]) arrayByAddingObject:aspect]; break;
         case AspectPositionInstead: self.insteadAspects = [(self.insteadAspects?:@[]) arrayByAddingObject:aspect]; break;
         case AspectPositionAfter:   self.afterAspects   = [(self.afterAspects  ?:@[]) arrayByAddingObject:aspect]; break;

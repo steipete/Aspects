@@ -7,10 +7,12 @@
 
 #import <Foundation/Foundation.h>
 
-typedef NS_ENUM(NSUInteger, AspectPosition) {
-    AspectPositionBefore,  /// Called before the original implementation.
-    AspectPositionInstead, /// Will replace the original implementation.
-    AspectPositionAfter    /// Called after the original implementation.
+typedef NS_OPTIONS(NSUInteger, AspectOptions) {
+    AspectPositionAfter   = 0,            /// Called after the original implementation (default)
+    AspectPositionInstead = 1,            /// Will replace the original implementation.
+    AspectPositionBefore  = 2,            /// Called before the original implementation.
+    
+    AspectOptionAutomaticRemoval = 1 << 3 /// Will remove the hook after the first execution.
 };
 
 /// Opaque Aspect Token that allows to deregister the hook.
@@ -30,18 +32,19 @@ typedef NS_ENUM(NSUInteger, AspectPosition) {
  */
 @interface NSObject (Aspects)
 
-/// Adds a block of code before/instead/after the current `selector` for a specific object.
+/// Adds a block of code before/instead/after the current `selector` for a specific class.
 /// If you choose `AspectPositionInstead`, the `arguments` array will contain the original invocation as last argument.
+/// @note Hooking static methods is not supported.
 /// @return A token which allows to later deregister the aspect.
-- (id<Aspect>)aspect_hookSelector:(SEL)selector
-                       atPosition:(AspectPosition)position
-                        withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block
++ (id<Aspect>)aspect_hookSelector:(SEL)selector
+                      withOptions:(AspectOptions)options
+                       usingBlock:(void (^)(id instance, NSArray *args))block
                             error:(NSError **)error;
 
-/// Hooks a selector class-wide.
-+ (id<Aspect>)aspect_hookSelector:(SEL)selector
-                       atPosition:(AspectPosition)position
-                        withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block
+/// Adds a block of code before/instead/after the current `selector` for a specific instance.
+- (id<Aspect>)aspect_hookSelector:(SEL)selector
+                      withOptions:(AspectOptions)options
+                       usingBlock:(void (^)(id instance, NSArray *args))block
                             error:(NSError **)error;
 
 @end
@@ -49,7 +52,8 @@ typedef NS_ENUM(NSUInteger, AspectPosition) {
 
 typedef NS_ENUM(NSUInteger, AspectsErrorCode) {
     AspectsErrorSelectorBlacklisted,                   /// Selectors like release, retain, autorelease are blacklisted.
-    AspectsErrorSelectorDeallocPosition,               /// When hooking dealloc, AspectPositionInstead is not allowed.
+    AspectsErrorDoesNotRespondToSelector,              /// Selector could not be found.
+    AspectsErrorSelectorDeallocPosition,               /// When hooking dealloc, only AspectPositionBefore is allowed.
     AspectsErrorSelectorAlreadyHookedInClassHierarchy, /// Statically hooking the same method in subclasses is not allowed.
     AspectsErrorFailedToAllocateClassPair,             /// The runtime failed creating a class pair.
     AspectsErrorRemoveObjectAlreadyDeallocated = 100   /// (for removing) The object hooked is already deallocated.

@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 PSPDFKit GmbH. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+@import UIKit;
 
 @interface AspectsAppDelegate : UIResponder <UIApplicationDelegate>
 

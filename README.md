@@ -1,4 +1,4 @@
-Aspects v1.2.0 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects)
+Aspects v1.3.0 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects)
 ==============
 
 Delightful, simple library for aspect oriented programming (AOP) by [@steipete](http://twitter.com/steipete).
@@ -159,6 +159,13 @@ MIT licensed, Copyright (c) 2014 Peter Steinberger, steipete@gmail.com, [@steipe
 
 Release Notes
 -----------------
+
+Version 1.3.0
+- Add automatic deregistration.
+- Checks if the selector exists before trying to hook.
+- Improved dealloc hooking. (no more unsafe_unretained needed)
+- Better examples.
+- Always log errors.
 
 Version 1.2.0
 

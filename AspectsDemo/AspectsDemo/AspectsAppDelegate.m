@@ -7,20 +7,29 @@
 //
 
 #import "AspectsAppDelegate.h"
+#import "AspectsViewController.h"
 #import "Aspects.h"
 
 @implementation AspectsAppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    AspectsViewController *aspectsController = [AspectsViewController new];
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-
-//    [self.window aspect_hookSelector:@selector(makeKeyAndVisible) atPosition:AspectPositionBefore withBlock:^(id object, NSArray *arguments) {
-//        NSLog(@"We're about to call -[UIWindow makeKeyAndVisible].");
-//    }];
-
-    // Override point for customization after application launch.
     self.window.backgroundColor = [UIColor whiteColor];
+    self.window.rootViewController = [[UINavigationController alloc] initWithRootViewController:aspectsController];
     [self.window makeKeyAndVisible];
+
+    // Ignore hooks when we are testing.
+    if (!NSClassFromString(@"XCTestCase")) {
+        [aspectsController aspect_hookSelector:@selector(buttonPressed:) withOptions:0 usingBlock:^(id instance, NSArray *arguments) {
+            NSLog(@"Button was pressed by: %@", arguments.firstObject);
+        } error:NULL];
+
+        [aspectsController aspect_hookSelector:@selector(viewWillLayoutSubviews) withOptions:0 usingBlock:^(id instance, NSArray *arguments) {
+            NSLog(@"Controller is layouting!");
+        } error:NULL];
+    }
+
     return YES;
 }
 

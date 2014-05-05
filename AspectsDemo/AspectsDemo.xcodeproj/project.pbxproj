@@ -20,6 +20,8 @@
 		78573F1819155A2E000D3B00 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 78573F1619155A2E000D3B00 /* InfoPlist.strings */; };
 		78573F1A19155A2E000D3B00 /* AspectsDemoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 78573F1919155A2E000D3B00 /* AspectsDemoTests.m */; };
 		78573F2519155A74000D3B00 /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 78573F2319155A74000D3B00 /* Aspects.m */; };
+		78D7D77119177C8E002EB314 /* AspectsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 78D7D76F19177C8E002EB314 /* AspectsViewController.m */; };
+		78D7D77219177C8E002EB314 /* AspectsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 78D7D77019177C8E002EB314 /* AspectsViewController.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,6 +53,9 @@
 		78573F1919155A2E000D3B00 /* AspectsDemoTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AspectsDemoTests.m; sourceTree = "<group>"; };
 		78573F2319155A74000D3B00 /* Aspects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Aspects.m; path = ../../Aspects.m; sourceTree = "<group>"; };
 		78573F2419155A74000D3B00 /* Aspects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Aspects.h; path = ../../Aspects.h; sourceTree = "<group>"; };
+		78D7D76E19177C8E002EB314 /* AspectsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AspectsViewController.h; sourceTree = "<group>"; };
+		78D7D76F19177C8E002EB314 /* AspectsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AspectsViewController.m; sourceTree = "<group>"; };
+		78D7D77019177C8E002EB314 /* AspectsViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = AspectsViewController.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,6 +121,9 @@
 				78573F0419155A2E000D3B00 /* AspectsAppDelegate.m */,
 				78573F0619155A2E000D3B00 /* Images.xcassets */,
 				78573EFB19155A2E000D3B00 /* Supporting Files */,
+				78D7D76E19177C8E002EB314 /* AspectsViewController.h */,
+				78D7D76F19177C8E002EB314 /* AspectsViewController.m */,
+				78D7D77019177C8E002EB314 /* AspectsViewController.xib */,
 			);
 			path = AspectsDemo;
 			sourceTree = "<group>";
@@ -227,6 +235,7 @@
 			files = (
 				78573EFF19155A2E000D3B00 /* InfoPlist.strings in Resources */,
 				78573F0719155A2E000D3B00 /* Images.xcassets in Resources */,
+				78D7D77219177C8E002EB314 /* AspectsViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,6 +254,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				78D7D77119177C8E002EB314 /* AspectsViewController.m in Sources */,
 				78573F0519155A2E000D3B00 /* AspectsAppDelegate.m in Sources */,
 				78573F2519155A74000D3B00 /* Aspects.m in Sources */,
 				78573F0119155A2E000D3B00 /* main.m in Sources */,
