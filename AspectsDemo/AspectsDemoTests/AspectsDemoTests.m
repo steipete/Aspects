@@ -15,6 +15,8 @@
 @property (nonatomic, assign) BOOL kvoTestCalled;
 - (void)testCall;
 - (void)testCallAndExecuteBlock:(dispatch_block_t)block;
+- (double)callReturnsDouble;
+- (long long)callReturnsLongLong;
 @end
 
 @implementation TestClass
@@ -29,6 +31,14 @@
 
 - (CGRect)testThatReturnsAStruct {
     return CGRectMake(100, 100, 100, 100);
+}
+
+- (double)callReturnsDouble {
+    return 1.5;
+}
+
+- (long long)callReturnsLongLong {
+    return 99;
 }
 
 @end
@@ -190,6 +200,34 @@
 
     CGRect rectHooked = [testClass testThatReturnsAStruct];
     XCTAssertTrue(CGRectEqualToRect(rect, rectHooked), @"Must be equal");
+    XCTAssertTrue([aspect remove], @"Must be able to deregister");
+}
+
+- (void)testDoubleReturn {
+    TestClass *testClass = [TestClass new];
+    double d1 = [testClass callReturnsDouble];
+    __block BOOL testCallCalled = NO;
+    id aspect = [testClass aspect_hookSelector:@selector(callReturnsDouble) withOptions:AspectPositionAfter usingBlock:^(id instance, NSArray *arguments) {
+        testCallCalled = YES;
+    } error:NULL];
+    double d2 = [testClass callReturnsDouble];
+
+    XCTAssertEqual(d1, d2, @"Must be equal");
+    XCTAssertTrue(testCallCalled, @"Must call hook");
+    XCTAssertTrue([aspect remove], @"Must be able to deregister");
+}
+
+- (void)testLongLongReturn {
+    TestClass *testClass = [TestClass new];
+    long long d1 = [testClass callReturnsLongLong];
+    __block BOOL testCallCalled = NO;
+    id aspect = [testClass aspect_hookSelector:@selector(callReturnsLongLong) withOptions:AspectPositionAfter usingBlock:^(id instance, NSArray *arguments) {
+        testCallCalled = YES;
+    } error:NULL];
+    long long d2 = [testClass callReturnsLongLong];
+
+    XCTAssertEqual(d1, d2, @"Must be equal");
+    XCTAssertTrue(testCallCalled, @"Must call hook");
     XCTAssertTrue([aspect remove], @"Must be able to deregister");
 }
 

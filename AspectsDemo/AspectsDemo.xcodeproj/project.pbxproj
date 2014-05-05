@@ -115,8 +115,8 @@
 		78573EFA19155A2E000D3B00 /* AspectsDemo */ = {
 			isa = PBXGroup;
 			children = (
-				78573F2319155A74000D3B00 /* Aspects.m */,
 				78573F2419155A74000D3B00 /* Aspects.h */,
+				78573F2319155A74000D3B00 /* Aspects.m */,
 				78573F0319155A2E000D3B00 /* AspectsAppDelegate.h */,
 				78573F0419155A2E000D3B00 /* AspectsAppDelegate.m */,
 				78573F0619155A2E000D3B00 /* Images.xcassets */,
