@@ -8,18 +8,19 @@ Delightful, simple library for aspect oriented programming (AOP) by [@steipete](
 Aspects extends `NSObject` with the following methods:
 
 ``` objc
-/// Adds a block of code before/instead/after the current `selector` for a specific object.
+/// Adds a block of code before/instead/after the current `selector` for a specific class.
 /// If you choose `AspectPositionInstead`, the `arguments` array will contain the original invocation as last argument.
+/// @note Hooking static methods is not supported.
 /// @return A token which allows to later deregister the aspect.
-- (id<Aspect>)aspect_hookSelector:(SEL)selector
-                       atPosition:(AspectPosition)position
-                        withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block
++ (id<Aspect>)aspect_hookSelector:(SEL)selector
+                      withOptions:(AspectOptions)options
+                       usingBlock:(void (^)(id instance, NSArray *args))block
                             error:(NSError **)error;
 
-/// Hooks a selector class-wide.
-+ (id<Aspect>)aspect_hookSelector:(SEL)selector
-                       atPosition:(AspectPosition)position
-                        withBlock:(void (^)(__unsafe_unretained id object, NSArray *arguments))block
+/// Adds a block of code before/instead/after the current `selector` for a specific instance.
+- (id<Aspect>)aspect_hookSelector:(SEL)selector
+                      withOptions:(AspectOptions)options
+                       usingBlock:(void (^)(id instance, NSArray *args))block
                             error:(NSError **)error;
 
 /// Deregister an aspect.
@@ -40,7 +41,7 @@ When to use Aspects
 Aspects can be used to **dynamically add logging** for debug builds only:
 
 ``` objc
-[UIViewController aspect_hookSelector:@selector(viewWillAppear:) atPosition:AspectPositionAfter withBlock:^(id object, NSArray *arguments) {
+[UIViewController aspect_hookSelector:@selector(viewWillAppear:) withOptions:AspectPositionAfter usingBlock:^(id object, NSArray *arguments) {
     NSLog(@"View Controller %@ will appear animated: %@", object, arguments.firstObject);
 }];
 ```
@@ -57,7 +58,7 @@ You can check if methods are really being called in your test cases:
     TestClass *testClass2 = [TestClass new];
 
     __block BOOL testCallCalled = NO;
-    [testClass aspect_hookSelector:@selector(testCall) atPosition:AspectPositionAfter withBlock:^(id object, NSArray *arguments) {
+    [testClass aspect_hookSelector:@selector(testCall) withOptions:AspectPositionAfter usingBlock:^(id object, NSArray *arguments) {
         testCallCalled = YES;
     } error:NULL];
 
@@ -71,7 +72,7 @@ You can check if methods are really being called in your test cases:
 It can be really useful for debugging. Here I was curious when exactly the tap gesture changed state:
 
 ``` objc
-[_singleTapGesture aspect_hookSelector:@selector(setState:) atPosition:AspectPositionAfter withBlock:^(__unsafe_unretained id object, NSArray *arguments) {
+[_singleTapGesture aspect_hookSelector:@selector(setState:) withOptions:AspectPositionAfter usingBlock:^(__unsafe_unretained id object, NSArray *arguments) {
     NSLog(@"%@: %@", object, arguments);
 } error:NULL];
 ```
@@ -87,7 +88,7 @@ Another convenient use case is adding handlers for classes that you don't own. I
     PSPDFAssert(action != NULL);
 
     __weak __typeof(self)weakSelf = self;
-    [self aspect_hookSelector:@selector(viewWillDisappear:) atPosition:AspectPositionAfter withBlock:^(id object, NSArray *arguments) {
+    [self aspect_hookSelector:@selector(viewWillDisappear:) withOptions:AspectPositionAfter usingBlock:^(id object, NSArray *arguments) {
         if (weakSelf.isBeingDismissed) {
             action();
         }
@@ -109,7 +110,7 @@ Using Aspects with methods with a return type
 When you're using Aspects with `AspectPositionInstead`, the last argument of the `arguments` array will be the `NSInvocation` of the original implementation. You can use this invocation to customize the return value:
 
 ``` objc
-    [PSPDFDrawView aspect_hookSelector:@selector(shouldProcessTouches:withEvent:) atPosition:AspectPositionInstead withBlock:^(id object, NSArray *arguments) {
+    [PSPDFDrawView aspect_hookSelector:@selector(shouldProcessTouches:withEvent:) withOptions:AspectPositionInstead usingBlock:^(id object, NSArray *arguments) {
         // Call original implementation.
         BOOL processTouches;
         NSInvocation *invocation = arguments.lastObject;
