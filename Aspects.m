@@ -10,8 +10,6 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 
-#import "RSSwizzle.h"
-
 #define AspectLog(...)
 //#define AspectLog(...) do { NSLog(__VA_ARGS__); }while(0)
 #define AspectLogError(...) do { NSLog(__VA_ARGS__); }while(0)
@@ -67,20 +65,6 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
                       withOptions:(AspectOptions)options
                        usingBlock:(AspectBlock)block
                             error:(NSError **)error {
-    
-//    RSSwizzleClassMethod(self, @selector(alloc), id, (), RSSWReplacement(
-//    {
-//        // The following code will be used as the new implementation.
-//        
-//        // Calling original implementation.
-//        id instance = RSSWCallOriginal();
-//        // Returning modified return value.
-//        NSLog(@"YEAAAH");
-//        return instance;
-//    }));
-//    
-//    
-//    return nil;
     Method method = class_getClassMethod(self, @selector(alloc));
     IMP originalIMP = NULL;
     
@@ -99,32 +83,29 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
             // If the class does not implement the method
             // we need to find an implementation in one of the superclasses.
             Class superclass = class_getSuperclass(self);
-            imp = method_getImplementation(class_getInstanceMethod(superclass,@selector(alloc)));
+            imp = method_getImplementation(class_getClassMethod(superclass,@selector(alloc)));
         }
         return imp;
     };
     
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wshadow"
-    id newIMPBlock = ^id (__unsafe_unretained id self) {
+    id newIMPBlock = ^id (__attribute__((objc_ownership(none))) id self) {        
         IMP originalImplementation = originalImpProvider();
         id instance = originalImplementation(self, @selector(alloc));
         
-        NSLog(@"Hello!");
         aspect_add(instance, selector, options, block, NULL);
         
         return instance;
     };
     #pragma clang diagnostic pop
-
-    const char *methodType = method_getTypeEncoding(method);
     
     IMP newIMP = imp_implementationWithBlock(newIMPBlock);
     
     // We need a lock to be sure that originalIMP has the right value in the
     // originalImpProvider block above.
     OSSpinLockLock(&lock);
-    originalIMP = class_replaceMethod(self, @selector(alloc), newIMP, methodType);
+    originalIMP = class_replaceMethod(object_getClass(self), @selector(alloc), newIMP, method_getTypeEncoding(method));
     OSSpinLockUnlock(&lock);
     
     //TODO(AF):

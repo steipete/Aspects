@@ -15,7 +15,11 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 
     [UIViewController aspect_hookSelector:@selector(viewDidAppear:) withOptions:AspectPositionAfter usingBlock:^(id instance, NSArray *args) {
-        NSLog(@"View did appear!");
+        NSLog(@"View did appear: %@", NSStringFromClass([instance class]));
+    } error:NULL];
+    
+    [AspectsViewController aspect_hookSelector:@selector(viewDidAppear:) withOptions:AspectPositionAfter usingBlock:^(id instance, NSArray *args) {
+        NSLog(@"Aspects view did appear!");
     } error:NULL];
 
     AspectsViewController *aspectsController = [AspectsViewController new];

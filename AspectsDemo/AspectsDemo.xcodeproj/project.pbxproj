@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		5ECF076D191A444000D91A3C /* RSSwizzle.m in Sources */ = {isa = PBXBuildFile; fileRef = 5ECF076C191A444000D91A3C /* RSSwizzle.m */; };
 		78573EF519155A2E000D3B00 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 78573EF419155A2E000D3B00 /* Foundation.framework */; };
 		78573EF719155A2E000D3B00 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 78573EF619155A2E000D3B00 /* CoreGraphics.framework */; };
 		78573EF919155A2E000D3B00 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 78573EF819155A2E000D3B00 /* UIKit.framework */; };
@@ -36,8 +35,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		5ECF076B191A444000D91A3C /* RSSwizzle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RSSwizzle.h; path = ../../../RSSwizzle/RSSwizzle/RSSwizzle.h; sourceTree = "<group>"; };
-		5ECF076C191A444000D91A3C /* RSSwizzle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RSSwizzle.m; path = ../../../RSSwizzle/RSSwizzle/RSSwizzle.m; sourceTree = "<group>"; };
 		78573EF119155A2E000D3B00 /* AspectsDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AspectsDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		78573EF419155A2E000D3B00 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		78573EF619155A2E000D3B00 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -118,8 +115,6 @@
 		78573EFA19155A2E000D3B00 /* AspectsDemo */ = {
 			isa = PBXGroup;
 			children = (
-				5ECF076B191A444000D91A3C /* RSSwizzle.h */,
-				5ECF076C191A444000D91A3C /* RSSwizzle.m */,
 				78573F2319155A74000D3B00 /* Aspects.m */,
 				78573F2419155A74000D3B00 /* Aspects.h */,
 				78573F0319155A2E000D3B00 /* AspectsAppDelegate.h */,
@@ -262,7 +257,6 @@
 				78D7D77119177C8E002EB314 /* AspectsViewController.m in Sources */,
 				78573F0519155A2E000D3B00 /* AspectsAppDelegate.m in Sources */,
 				78573F2519155A74000D3B00 /* Aspects.m in Sources */,
-				5ECF076D191A444000D91A3C /* RSSwizzle.m in Sources */,
 				78573F0119155A2E000D3B00 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
