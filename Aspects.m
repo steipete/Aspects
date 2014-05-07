@@ -43,6 +43,7 @@
 @interface AspectClassContainer : NSObject
 
 @property (nonatomic, strong) NSArray *aspectContainers;
+@property (nonatomic, strong) NSArray *instances;
 
 @end
 
@@ -91,6 +92,14 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
             classContainer.aspectContainers = [(classContainer.aspectContainers ?:@[]) arrayByAddingObject:aspectContainer];
         }
     });
+    
+    [identifier aspect_hookSelector:@selector(remove) withOptions:AspectPositionBefore usingBlock:^(id instance, NSArray *args) {
+        AspectClassContainer *classContainer = aspect_getClassContainerForClass(self);
+        for (id<Aspect> aspect in classContainer.instances.copy) {
+            [aspect remove];
+        }
+    } error:NULL];
+    
     return (id<Aspect>)identifier;
 }
 
@@ -283,18 +292,21 @@ static void aspects_swizzleAlloc(Class klass) {
         id instance = originalImplementation(self, @selector(alloc));
         
         AspectClassContainer *classContainer = aspect_getClassContainerForClass(klass);
+        NSMutableArray *aspectMutableArray = [NSMutableArray array];
         
         for (AspectsContainer *container in classContainer.aspectContainers) {
             for (AspectIdentifier *aspect in container.beforeAspects) {
-                aspect_add(instance, aspect.selector, aspect.options, aspect.block, NULL);
+                [aspectMutableArray addObject:aspect_add(instance, aspect.selector, aspect.options, aspect.block, NULL)];
             }
             for (AspectIdentifier *aspect in container.insteadAspects) {
-                aspect_add(instance, aspect.selector, aspect.options, aspect.block, NULL);
+                [aspectMutableArray addObject:aspect_add(instance, aspect.selector, aspect.options, aspect.block, NULL)];
             }
             for (AspectIdentifier *aspect in container.afterAspects) {
-                aspect_add(instance, aspect.selector, aspect.options, aspect.block, NULL);
+                [aspectMutableArray addObject:aspect_add(instance, aspect.selector, aspect.options, aspect.block, NULL) ];
             }
         }
+        
+        classContainer.instances = [(classContainer.instances ?: @[]) arrayByAddingObjectsFromArray:aspectMutableArray];
         
         return instance;
     };
