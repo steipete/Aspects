@@ -107,7 +107,7 @@
     XCTAssertEqualObjects(testLabel3.text, @"Test", @"Must match");
 
     // Test that removing an aspect returns the original.
-    XCTAssertEqualObjects(testLabel.text, @"Custom Text", @"Must match");
+    XCTAssertEqualObjects(testLabel.text, @"Default text", @"Must match"); // Note: since the global aspect is removed, it removes aspects on instances with the same selector name
     XCTAssertTrue([aspect remove], @"Must return YES");
     XCTAssertEqualObjects(testLabel.text, @"Default text", @"Must match");
     XCTAssertFalse([aspect remove], @"Must return NO");

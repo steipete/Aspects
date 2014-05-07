@@ -15,7 +15,7 @@
 #define AspectLogError(...) do { NSLog(__VA_ARGS__); }while(0)
 
 // Tracks a single aspect.
-@interface AspectIdentifier : NSObject
+@interface AspectIdentifier : NSObject <Aspect>
 - (id)initWithSelector:(SEL)selector object:(id)object options:(AspectOptions)options block:(id)block;
 @property (nonatomic, assign) SEL selector;
 @property (nonatomic, strong) id block;
@@ -95,9 +95,14 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
     
     [identifier aspect_hookSelector:@selector(remove) withOptions:AspectPositionBefore usingBlock:^(id instance, NSArray *args) {
         AspectClassContainer *classContainer = aspect_getClassContainerForClass(self);
-        for (id<Aspect> aspect in classContainer.instances.copy) {
-            [aspect remove];
+        NSMutableArray *aspectMutableArray = [classContainer.instances mutableCopy];
+        for (AspectIdentifier *aspect in classContainer.instances) {
+        if (aspect.selector == identifier.selector) {
+                [aspect remove];
+                [aspectMutableArray removeObject:aspect];
+            }
         }
+        classContainer.instances = [NSArray arrayWithArray:aspectMutableArray];
     } error:NULL];
     
     return (id<Aspect>)identifier;
