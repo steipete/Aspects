@@ -39,7 +39,7 @@ Aspects collects all arguments in the `arguments` array. Primitive values will b
 
 When to use Aspects
 -------------------
-Aspects are used to encapsulate "cross-cutting" concerns. These are the kind of requirements that *cut-accross* many modules in your system, and can be encapsulated using normal Object Oriented programming. Some examples of these kinds of requirements: 
+Aspects are used to encapsulate "cross-cutting" concerns. These are the kind of requirements that *cut-accross* many modules in your system, and so cannot be encapsulated using normal Object Oriented programming. Some examples of these kinds of requirements: 
 
 * Whenever a user invokes a method on the service client, security should be checked. 
 * Whenever a useer interacts with the store, a genius suggestion should be presented, based on their interaction. 
