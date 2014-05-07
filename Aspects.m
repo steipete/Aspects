@@ -10,6 +10,8 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 
+#import "RSSwizzle.h"
+
 #define AspectLog(...)
 //#define AspectLog(...) do { NSLog(__VA_ARGS__); }while(0)
 #define AspectLogError(...) do { NSLog(__VA_ARGS__); }while(0)
@@ -66,6 +68,19 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
                        usingBlock:(AspectBlock)block
                             error:(NSError **)error {
     
+//    RSSwizzleClassMethod(self, @selector(alloc), id, (), RSSWReplacement(
+//    {
+//        // The following code will be used as the new implementation.
+//        
+//        // Calling original implementation.
+//        id instance = RSSWCallOriginal();
+//        // Returning modified return value.
+//        NSLog(@"YEAAAH");
+//        return instance;
+//    }));
+//    
+//    
+//    return nil;
     Method method = class_getClassMethod(self, @selector(alloc));
     IMP originalIMP = NULL;
     
@@ -84,7 +99,7 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
             // If the class does not implement the method
             // we need to find an implementation in one of the superclasses.
             Class superclass = class_getSuperclass(self);
-            imp = method_getImplementation(class_getInstanceMethod(superclass,selector));
+            imp = method_getImplementation(class_getInstanceMethod(superclass,@selector(alloc)));
         }
         return imp;
     };
@@ -95,16 +110,14 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
         IMP originalImplementation = originalImpProvider();
         id instance = originalImplementation(self, @selector(alloc));
         
+        NSLog(@"Hello!");
         aspect_add(instance, selector, options, block, NULL);
         
         return instance;
     };
     #pragma clang diagnostic pop
 
-    //the second and third characters *  must be “@:” (the first character is the return type).
     const char *methodType = method_getTypeEncoding(method);
-        
-    NSLog(@"%s", methodType);
     
     IMP newIMP = imp_implementationWithBlock(newIMPBlock);
     
@@ -112,7 +125,6 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
     // originalImpProvider block above.
     OSSpinLockLock(&lock);
     originalIMP = class_replaceMethod(self, @selector(alloc), newIMP, methodType);
-    NSLog(@"%@", originalIMP == NULL ? @"Failure" : @"Success"); // Always returns NULL.
     OSSpinLockUnlock(&lock);
     
     //TODO(AF):
