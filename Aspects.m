@@ -52,6 +52,10 @@ typedef void(^AspectBlock)(id instance, NSArray *arguments);
 AspectLogError(@"Aspects: %@", errorDescription); \
 if (error) { *error = [NSError errorWithDomain:AspectsErrorDomain code:errorCode userInfo:@{NSLocalizedDescriptionKey: errorDescription}]; }}while(0)
 
+NSString *const AspectsErrorDomain = @"AspectsErrorDomain";
+static NSString *const AspectsSubclassSuffix = @"_Aspects_";
+static NSString *const AspectsMessagePrefix = @"aspects_";
+
 @implementation NSObject (Aspects)
 
 ///////////////////////////////////////////////////////////////////////////////////////////
