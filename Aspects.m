@@ -68,7 +68,7 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
     Method method = class_getClassMethod(self, @selector(alloc));
     IMP originalIMP = NULL;
     
-    __block OSSpinLock lock = OS_SPINLOCK_INIT;
+    static OSSpinLock lock = OS_SPINLOCK_INIT;
 
     // This block will be called by the client to get original implementation and call it.
     IMP (^originalImpProvider)(void)  = ^IMP{
