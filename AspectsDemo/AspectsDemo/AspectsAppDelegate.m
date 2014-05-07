@@ -13,12 +13,17 @@
 @implementation AspectsAppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+
+    [UIViewController aspect_hookSelector:@selector(viewDidAppear:) withOptions:AspectPositionAfter usingBlock:^(id instance, NSArray *args) {
+        NSLog(@"View did appear!");
+    } error:NULL];
+
     AspectsViewController *aspectsController = [AspectsViewController new];
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     self.window.backgroundColor = [UIColor whiteColor];
     self.window.rootViewController = [[UINavigationController alloc] initWithRootViewController:aspectsController];
     [self.window makeKeyAndVisible];
-
+    
     // Ignore hooks when we are testing.
     if (!NSClassFromString(@"XCTestCase")) {
         [aspectsController aspect_hookSelector:@selector(buttonPressed:) withOptions:0 usingBlock:^(id instance, NSArray *arguments) {

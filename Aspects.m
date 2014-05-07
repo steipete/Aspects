@@ -52,10 +52,6 @@ typedef void(^AspectBlock)(id instance, NSArray *arguments);
 AspectLogError(@"Aspects: %@", errorDescription); \
 if (error) { *error = [NSError errorWithDomain:AspectsErrorDomain code:errorCode userInfo:@{NSLocalizedDescriptionKey: errorDescription}]; }}while(0)
 
-NSString *const AspectsErrorDomain = @"AspectsErrorDomain";
-static NSString *const AspectsSubclassSuffix = @"_Aspects_";
-static NSString *const AspectsMessagePrefix = @"aspects_";
-
 @implementation NSObject (Aspects)
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -65,7 +61,62 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
                       withOptions:(AspectOptions)options
                        usingBlock:(AspectBlock)block
                             error:(NSError **)error {
-    return aspect_add((id)self, selector, options, block, error);
+
+    Method method = class_getClassMethod(self, @selector(alloc));
+    IMP originalIMP = NULL;
+    
+    __block OSSpinLock lock = OS_SPINLOCK_INIT;
+
+    // This block will be called by the client to get original implementation and call it.
+    IMP (^originalImpProvider)(void)  = ^IMP{
+        // It's possible that another thread can call the method between the call to
+        // class_replaceMethod and its return value being set.
+        // So to be sure originalIMP has the right value, we need a lock.
+        OSSpinLockLock(&lock);
+        IMP imp = originalIMP;
+        OSSpinLockUnlock(&lock);
+        
+        if (NULL == imp){
+            // If the class does not implement the method
+            // we need to find an implementation in one of the superclasses.
+            Class superclass = class_getSuperclass(self);
+            imp = method_getImplementation(class_getInstanceMethod(superclass,selector));
+        }
+        return imp;
+    };
+    
+    // We ask the client for the new implementation block.
+    // We pass swizzleInfo as an argument to factory block, so the client can
+    // call original implementation from the new implementation.
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wshadow"
+    id newIMPBlock = ^id (__unsafe_unretained id self) {
+        IMP originalImplementation = originalImpProvider();
+        id instance = originalImplementation(self, @selector(alloc));
+        
+        aspect_add(instance, selector, options, block, NULL);
+        
+        return instance;
+    };
+    #pragma clang diagnostic pop
+
+    //the second and third characters *  must be “@:” (the first character is the return type).
+    const char *methodType = method_getTypeEncoding(method);
+        
+    NSLog(@"%s", methodType);
+    
+    IMP newIMP = imp_implementationWithBlock(newIMPBlock);
+    
+    // We need a lock to be sure that originalIMP has the right value in the
+    // originalImpProvider block above.
+    OSSpinLockLock(&lock);
+    originalIMP = class_replaceMethod(self, @selector(alloc), newIMP, methodType);
+    NSLog(@"%@", originalIMP == NULL ? @"Failure" : @"Success"); // Always returns NULL.
+    OSSpinLockUnlock(&lock);
+    
+    //TODO(AF):
+    return nil;
+//    return aspect_add((id)self, selector, options, block, error);
 }
 
 /// @return A token which allows to later deregister the aspect.
