@@ -65,7 +65,7 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
                       withOptions:(AspectOptions)options
                        usingBlock:(AspectBlock)block
                             error:(NSError **)error {
-
+    
     Method method = class_getClassMethod(self, @selector(alloc));
     IMP originalIMP = NULL;
     
@@ -89,9 +89,6 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
         return imp;
     };
     
-    // We ask the client for the new implementation block.
-    // We pass swizzleInfo as an argument to factory block, so the client can
-    // call original implementation from the new implementation.
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wshadow"
     id newIMPBlock = ^id (__unsafe_unretained id self) {
