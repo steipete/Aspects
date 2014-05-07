@@ -45,6 +45,8 @@
 @property (nonatomic, strong) NSArray *aspectContainers;
 @property (nonatomic, strong) NSArray *instances;
 
+- (void)removeAspectContainer:(AspectsContainer *)container;
+
 @end
 
 @interface NSInvocation (Aspects)
@@ -94,6 +96,7 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
     });
     
     [identifier aspect_hookSelector:@selector(remove) withOptions:AspectPositionBefore usingBlock:^(id instance, NSArray *args) {
+        AspectsContainer *aspectContainer = aspect_getContainerForObject((id)self, selector);
         AspectClassContainer *classContainer = aspect_getClassContainerForClass(self);
         NSMutableArray *aspectMutableArray = [classContainer.instances mutableCopy];
         for (AspectIdentifier *aspect in classContainer.instances) {
@@ -103,7 +106,7 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
             }
         }
         classContainer.instances = [NSArray arrayWithArray:aspectMutableArray];
-        //TODO(AF): aspect containers never releases the aspect container. 
+        [classContainer removeAspectContainer:aspectContainer];
     } error:NULL];
     
     return (id<Aspect>)identifier;
@@ -770,5 +773,11 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
 #pragma mark - AspectClassContainer
 
 @implementation AspectClassContainer
+
+- (void)removeAspectContainer:(AspectsContainer *)container {
+    NSMutableArray *mutableArray = [self.aspectContainers mutableCopy];
+    [mutableArray removeObject:container];
+    self.aspectContainers = [NSArray arrayWithArray:mutableArray];
+}
 
 @end
