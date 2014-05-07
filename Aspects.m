@@ -103,6 +103,7 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
             }
         }
         classContainer.instances = [NSArray arrayWithArray:aspectMutableArray];
+        //TODO(AF): aspect containers never releases the aspect container. 
     } error:NULL];
     
     return (id<Aspect>)identifier;
