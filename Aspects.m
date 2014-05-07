@@ -284,18 +284,15 @@ static void aspects_swizzleAlloc(Class klass) {
         
         AspectClassContainer *classContainer = aspect_getClassContainerForClass(klass);
         
-        NSLog(@"Alloc: %@ (%p)", self, instance);
-        
-        NSError *error;
         for (AspectsContainer *container in classContainer.aspectContainers) {
             for (AspectIdentifier *aspect in container.beforeAspects) {
-                aspect_add(instance, aspect.selector, aspect.options, aspect.block, &error);
+                aspect_add(instance, aspect.selector, aspect.options, aspect.block, NULL);
             }
             for (AspectIdentifier *aspect in container.insteadAspects) {
-                aspect_add(instance, aspect.selector, aspect.options, aspect.block, &error);
+                aspect_add(instance, aspect.selector, aspect.options, aspect.block, NULL);
             }
             for (AspectIdentifier *aspect in container.afterAspects) {
-                aspect_add(instance, aspect.selector, aspect.options, aspect.block, &error);
+                aspect_add(instance, aspect.selector, aspect.options, aspect.block, NULL);
             }
         }
         
@@ -444,24 +441,21 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
     NSCParameterAssert(invocation);
 	SEL aliasSelector = aspect_aliasForSelector(invocation.selector);
     AspectsContainer *objectContainer = objc_getAssociatedObject(self, aliasSelector);
-    AspectsContainer *classContainer = aspect_getContainerForClass(object_getClass(self), aliasSelector);
     NSArray *aspectsToRemove = nil;
 
     // Before hooks.
     NSArray *arguments = nil;
-    if (objectContainer.hasAspects || classContainer.hasAspects) {
+    if (objectContainer.hasAspects) {
         // Only collect the arguments if there are hooks to call.
         arguments = invocation.aspects_arguments;
-        aspect_invoke(classContainer.beforeAspects, arguments);
         aspect_invoke(objectContainer.beforeAspects, arguments);
     }
 
     // Instead hooks.
     BOOL respondsToAlias = YES;
-    if (objectContainer.insteadAspects.count || classContainer.insteadAspects.count) {
+    if (objectContainer.insteadAspects.count) {
         invocation.selector = aliasSelector;
         NSArray *argumentsWithInvocation = [arguments arrayByAddingObject:invocation];
-        aspect_invoke(classContainer.insteadAspects, argumentsWithInvocation);
         aspect_invoke(objectContainer.insteadAspects, argumentsWithInvocation);
     }else {
         Class klass = object_getClass(invocation.target);
@@ -475,7 +469,6 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
     }
 
     // After hooks.
-    aspect_invoke(classContainer.afterAspects, arguments);
     aspect_invoke(objectContainer.afterAspects, arguments);
 
     // If no hooks are installed, call original implementation (usually to throw an exception)
@@ -519,17 +512,6 @@ static AspectsContainer *aspect_getContainerForObject(NSObject *self, SEL select
         objc_setAssociatedObject(self, aliasSelector, aspectContainer, OBJC_ASSOCIATION_RETAIN);
     }
     return aspectContainer;
-}
-
-static AspectsContainer *aspect_getContainerForClass(Class klass, SEL selector) {
-    NSCParameterAssert(klass);
-    AspectsContainer *classContainer = nil;
-    do {
-        classContainer = objc_getAssociatedObject(klass, selector);
-        if (classContainer.hasAspects) break;
-    }while ((klass = class_getSuperclass(klass)));
-
-    return classContainer;
 }
 
 static void aspect_destroyContainerForObject(id<NSObject> self, SEL selector) {
