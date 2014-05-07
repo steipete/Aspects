@@ -48,12 +48,12 @@ Aspect-oritented programming (AOP) is used to encapsulate "cross-cutting" concer
 If we implemented the above requirements using regular OO there'd be some drawbacks: 
 
 
-Good OO says a class should have a single responsibility, however adding on extra *cross-cutting* requirements means a class that a class is taking on other responsibilites. For example you might have a **StoreClient** that supposed to be all about making purchases from an online store. Add in some cross-cutting requirements and it might also have to take on the roles of logging, security and recommendations.   
+Good OO says a class should have a single responsibility, however adding on extra *cross-cutting* requirements means a class that is taking on other responsibilites. For example you might have a **StoreClient** that supposed to be all about making purchases from an online store. Add in some cross-cutting requirements and it might also have to take on the roles of logging, security and recommendations. This is not great: 
 
-* Our StoreClient is now harder to maintain
+* Our StoreClient is now harder to understand and maintain.
 * These cross-cutting requirements are duplicated and spreading throughout our app. 
 
-AOP lets us modularize these cross-cutting requirements again. As shown in the examples above cross-cutting requirements can be eithe technical or business focused in nature.  
+AOP lets us modularize these cross-cutting requirements, and then cleanly identify all of the places they should be applied. As shown in the examples above cross-cutting requirements can be eithe technical or business focused in nature.  
 
 ## Here are some concrete examples: 
 
