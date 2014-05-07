@@ -39,6 +39,21 @@ Aspects collects all arguments in the `arguments` array. Primitive values will b
 
 When to use Aspects
 -------------------
+Aspects are used to encapsulate "cross-cutting" concerns. These are the kind of requirements that *cut-accross* many modules in your system, and can be encapsulated using normal Object Oriented programming. Some examples of these kinds of requirements: 
+
+* Whenever a user invokes a method on the service client, security should be checked. 
+* Whenever a useer interacts with the store, a genius suggestion should be presented, based on their interaction. 
+* All calls should be logged. 
+
+If we implemented the above requirements using regular OO there'd be some drawbacks: 
+
+* Code would be repeated in many places. 
+* Methods have extra parameters. 
+* ***(most importantly)*** Good OO says a class should have a single responsibility, however adding on these extra requirements means a class that's supposed to be only about, say, interacting with a store has to also do logging, security and recommendations. Not good. 
+
+
+## Here are some concrete examples: 
+
 
 Aspects can be used to **dynamically add logging** for debug builds only:
 
