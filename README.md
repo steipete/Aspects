@@ -136,8 +136,9 @@ Compatibility and Limitations
 -----------------------------
 Aspects uses quite some runtime trickery to achieve what it does. You can mostly mix this with regular method swizzling.
 
-An important limitation is that for class-based hooking, a method can only be hooked once within the subclass hierarchy. [See #2](https://github.com/steipete/Aspects/issues/2)
-This does not apply for objects that are hooked. Aspects creates a dynamic subclass here and has full control.
+Mixing global and per-instance hooks with the same selector name gets tricky when unregistering the global hook. It's best to avoid that if possible. 
+
+If you add a global hook *after* an instance of that class was already allocated, the hook won't take effect. 
 
 KVO works if observers are created after your calls `aspect_hookSelector:` It most likely will crash the other way around.
 Still looking for workarounds here - any help apprechiated.
