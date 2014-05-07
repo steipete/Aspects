@@ -15,7 +15,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gKX-p5-Qxl">
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gKX-p5-Qxl">
                     <rect key="frame" x="43" y="269" width="235" height="30"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <state key="normal" title="Present hooked System Controller">
@@ -27,12 +27,6 @@
                 </button>
             </subviews>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
-            <constraints>
-                <constraint firstAttribute="trailing" secondItem="gKX-p5-Qxl" secondAttribute="trailing" constant="42" id="2Xt-SA-Rbc"/>
-                <constraint firstItem="gKX-p5-Qxl" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="43" id="93u-8g-6Sl"/>
-                <constraint firstAttribute="bottom" secondItem="gKX-p5-Qxl" secondAttribute="bottom" constant="269" id="9Ns-Ri-BGy"/>
-                <constraint firstItem="gKX-p5-Qxl" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="269" id="gRf-at-BdM"/>
-            </constraints>
             <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
             <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina4"/>
         </view>
