@@ -23,7 +23,7 @@
 @property (nonatomic, assign) AspectOptions options;
 @end
 
-// Tracks all aspects for an object/class.
+// Tracks all aspects for an object.
 @interface AspectsContainer : NSObject
 - (void)addAspect:(AspectIdentifier *)aspect withOptions:(AspectOptions)injectPosition;
 - (BOOL)removeAspect:(id)aspect;
@@ -40,10 +40,11 @@
 @property (nonatomic, weak) AspectTracker *parentEntry;
 @end
 
+// Tracks aspects for a given class, as well as instances of the aspects
 @interface AspectClassContainer : NSObject
 
 @property (nonatomic, strong) NSArray *aspectContainers;
-@property (nonatomic, strong) NSArray *instances;
+@property (nonatomic, strong) NSArray *instances; // "live" aspects on class instances
 
 - (void)removeAspectContainer:(AspectsContainer *)container;
 
@@ -95,6 +96,7 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
         }
     });
     
+    // When the class-level aspect is removed, removed all "live" aspects attached to instances of that class.
     [identifier aspect_hookSelector:@selector(remove) withOptions:AspectPositionBefore usingBlock:^(id instance, NSArray *args) {
         AspectsContainer *aspectContainer = aspect_getContainerForObject((id)self, selector);
         AspectClassContainer *classContainer = aspect_getClassContainerForClass(self);
