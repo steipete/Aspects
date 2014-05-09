@@ -78,6 +78,22 @@
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Generic Hook Tests
 
+- (void)testCALayerExploding {
+    __block BOOL called = NO;
+    id globalAspect = [CALayer aspect_hookSelector:@selector(name) withOptions:AspectPositionAfter usingBlock:^(id instance, NSArray *arguments) {
+        NSLog(@"Hello from %@", instance);
+        called = YES;
+    } error:NULL];
+
+    // We had some branches where this blew up already.
+    CALayer *test = [CALayer new];
+    XCTAssertNotNil(test);
+    [test name];
+    XCTAssertTrue(called, @"Flag needs to be called.");
+
+    XCTAssertTrue([globalAspect remove]);
+}
+
 - (void)testInsteadHook {
     // Test object replacement for UILabel.
     UILabel *testLabel = [UILabel new];
