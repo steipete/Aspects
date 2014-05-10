@@ -66,8 +66,8 @@ AOP lets us modularize these cross-cutting requirements, and then cleanly identi
 Aspects can be used to **dynamically add logging** for debug builds only:
 
 ``` objc
-[UIViewController aspect_hookSelector:@selector(viewWillAppear:) withOptions:AspectPositionAfter usingBlock:^(id object, BOOL animated) {
-    NSLog(@"View Controller %@ will appear animated: %tu", object, animated);
+[UIViewController aspect_hookSelector:@selector(viewWillAppear:) withOptions:AspectPositionAfter usingBlock:^(id<AspectInfo> aspectInfo, BOOL animated) {
+    NSLog(@"View Controller %@ will appear animated: %tu", object.instance, animated);
 } error:NULL];
 ```
 
