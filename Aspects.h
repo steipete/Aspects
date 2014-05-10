@@ -24,6 +24,15 @@ typedef NS_OPTIONS(NSUInteger, AspectOptions) {
 
 @end
 
+// TODO: proper name, description
+@protocol AspectInfo <NSObject>
+
+- (id)instance;
+- (NSArray *)arguments;
+- (NSInvocation *)originalInvocation;
+
+@end
+
 /**
  Aspects uses Objective-C message forwarding to hook into messages. This will create some overhead. Don't add aspects to methods that are called a lot. Aspects is meant for view/controller code that is not called a 1000 times per second.
 
@@ -33,18 +42,17 @@ typedef NS_OPTIONS(NSUInteger, AspectOptions) {
 @interface NSObject (Aspects)
 
 /// Adds a block of code before/instead/after the current `selector` for a specific class.
-/// If you choose `AspectPositionInstead`, the `arguments` array will contain the original invocation as last argument.
 /// @note Hooking static methods is not supported.
 /// @return A token which allows to later deregister the aspect.
 + (id<Aspect>)aspect_hookSelector:(SEL)selector
                       withOptions:(AspectOptions)options
-                       usingBlock:(void (^)(id instance, NSArray *args))block
+                       usingBlock:(id)block
                             error:(NSError **)error;
 
 /// Adds a block of code before/instead/after the current `selector` for a specific instance.
 - (id<Aspect>)aspect_hookSelector:(SEL)selector
                       withOptions:(AspectOptions)options
-                       usingBlock:(void (^)(id instance, NSArray *args))block
+                       usingBlock:(id)block
                             error:(NSError **)error;
 
 @end
