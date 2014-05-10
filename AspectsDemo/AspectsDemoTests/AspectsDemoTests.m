@@ -26,7 +26,7 @@
 }
 
 - (void)testCallAndExecuteBlock:(dispatch_block_t)block {
-    block();
+    if (block) block();
 }
 
 - (CGRect)testThatReturnsAStruct {
@@ -94,6 +94,62 @@
     XCTAssertFalse(called, @"Flag must have been NOT set.");
 
     XCTAssertTrue([aspect remove], @"Must be able to deregister");
+}
+
+- (void)testMatchingBlockSignature2 {
+    TestClass *testClass = [TestClass new];
+
+    __block BOOL called = NO;
+    id<AspectToken> aspect = [testClass aspect_hookSelector:@selector(testCallAndExecuteBlock:) withOptions:AspectPositionAfter usingBlock:^{
+        called = YES;
+    } error:NULL];
+    [testClass testCallAndExecuteBlock:NULL];
+    XCTAssertTrue(called, @"Flag must have been set.");
+
+    TestClass *testClass2 = [TestClass new];
+    called = NO;
+    [testClass2 testCall];
+    XCTAssertFalse(called, @"Flag must have been NOT set.");
+
+    XCTAssertTrue([aspect remove], @"Must be able to deregister");
+}
+
+- (void)testTooLargeBlockSignature {
+    TestClass *testClass = [TestClass new];
+
+    NSError *error = nil;
+    __block BOOL called = NO;
+    id<AspectToken> aspect = [testClass aspect_hookSelector:@selector(testCallAndExecuteBlock:) withOptions:AspectPositionAfter usingBlock:^(id<AspectInfo> info, id test, id foo, id bar) {
+        called = YES;
+    } error:&error];
+    [testClass testCallAndExecuteBlock:NULL];
+    XCTAssertNil(aspect);
+    XCTAssertTrue(error.code == AspectsErrorIncompatibleBlockSignature);
+    XCTAssertFalse(called, @"Flag must have not been set.");
+
+    TestClass *testClass2 = [TestClass new];
+    called = NO;
+    [testClass2 testCall];
+    XCTAssertFalse(called, @"Flag must have been NOT set.");
+}
+
+- (void)testMismatchingSignature {
+    TestClass *testClass = [TestClass new];
+
+    NSError *error = nil;
+    __block BOOL called = NO;
+    id<AspectToken> aspect = [testClass aspect_hookSelector:@selector(testCallAndExecuteBlock:) withOptions:AspectPositionAfter usingBlock:^(NSUInteger foobar) {
+        called = YES;
+    } error:&error];
+    [testClass testCallAndExecuteBlock:NULL];
+    XCTAssertNil(aspect);
+    XCTAssertTrue(error.code == AspectsErrorIncompatibleBlockSignature);
+    XCTAssertFalse(called, @"Flag must have not been set.");
+
+    TestClass *testClass2 = [TestClass new];
+    called = NO;
+    [testClass2 testCall];
+    XCTAssertFalse(called, @"Flag must have been NOT set.");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////

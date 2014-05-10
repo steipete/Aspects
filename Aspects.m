@@ -91,7 +91,7 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Public Aspects API
 
-+ (id<Aspect>)aspect_hookSelector:(SEL)selector
++ (id<AspectToken>)aspect_hookSelector:(SEL)selector
                       withOptions:(AspectOptions)options
                        usingBlock:(id)block
                             error:(NSError **)error {
@@ -99,7 +99,7 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
 }
 
 /// @return A token which allows to later deregister the aspect.
-- (id<Aspect>)aspect_hookSelector:(SEL)selector
+- (id<AspectToken>)aspect_hookSelector:(SEL)selector
                       withOptions:(AspectOptions)options
                        usingBlock:(id)block
                             error:(NSError **)error {
@@ -193,15 +193,26 @@ static BOOL aspect_isCompatibleBlockSignature(NSMethodSignature *blockSignature,
 
     BOOL signaturesMatch = YES;
     NSMethodSignature *methodSignature = [[object class] instanceMethodSignatureForSelector:selector];
-    if (methodSignature.numberOfArguments != blockSignature.numberOfArguments) {
+    if (blockSignature.numberOfArguments > methodSignature.numberOfArguments) {
         signaturesMatch = NO;
     }else {
+        if (blockSignature.numberOfArguments > 1) {
+            const char *blockType = [blockSignature getArgumentTypeAtIndex:1];
+            if (blockType[0] != '@') {
+                signaturesMatch = NO;
+            }
+        }
         // Argument 0 is self/block, argument 1 is SEL or id<AspectInfo>. We start comparing at argument 2.
-        for (NSUInteger idx = 2; idx < methodSignature.numberOfArguments; idx++) {
-            const char *methodType = [methodSignature getArgumentTypeAtIndex:idx];
-            const char *blockType = [blockSignature getArgumentTypeAtIndex:idx];
-            // Only compare parameter, not the optional type data.
-            if (!methodType || !blockType || methodType[0] != blockType[0]) return NO;
+        // The block can have less arguments than the method, that's ok.
+        if (signaturesMatch) {
+            for (NSUInteger idx = 2; idx < blockSignature.numberOfArguments; idx++) {
+                const char *methodType = [methodSignature getArgumentTypeAtIndex:idx];
+                const char *blockType = [blockSignature getArgumentTypeAtIndex:idx];
+                // Only compare parameter, not the optional type data.
+                if (!methodType || !blockType || methodType[0] != blockType[0]) {
+                    signaturesMatch = NO; break;
+                }
+            }
         }
     }
 
@@ -756,12 +767,13 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
     NSInvocation *originalInvocation = info.originalInvocation;
     NSUInteger numberOfArguments = self.blockSignature.numberOfArguments;
 
-    if (numberOfArguments != originalInvocation.methodSignature.numberOfArguments) {
-        AspectLogError(@"Signature mismatch. Not calling %@", info);
+    // Be extra paranoid. We already check that on hook registration.
+    if (numberOfArguments > originalInvocation.methodSignature.numberOfArguments) {
+        AspectLogError(@"Block has too many arguments. Not calling %@", info);
         return NO;
     }
 
-    // The `self` of the block will be the AspectInfo.
+    // The `self` of the block will be the AspectInfo. Optional.
     if (numberOfArguments > 1) {
         [blockInvocation setArgument:&info atIndex:1];
     }
@@ -790,7 +802,7 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p, SEL:%@ object:%@ options:%tu block:%@ signature:%@>", self.class, self, NSStringFromSelector(self.selector), self.object, self.options, self.block, self.blockSignature];
+    return [NSString stringWithFormat:@"<%@: %p, SEL:%@ object:%@ options:%tu block:%@ (#%tu args)>", self.class, self, NSStringFromSelector(self.selector), self.object, self.options, self.block, self.blockSignature.numberOfArguments];
 }
 
 - (BOOL)remove {
