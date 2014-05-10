@@ -124,7 +124,7 @@
     } error:&error];
     [testClass testCallAndExecuteBlock:NULL];
     XCTAssertNil(aspect);
-    XCTAssertTrue(error.code == AspectsErrorIncompatibleBlockSignature);
+    XCTAssertTrue(error.code == AspectErrorIncompatibleBlockSignature);
     XCTAssertFalse(called, @"Flag must have not been set.");
 
     TestClass *testClass2 = [TestClass new];
@@ -143,7 +143,7 @@
     } error:&error];
     [testClass testCallAndExecuteBlock:NULL];
     XCTAssertNil(aspect);
-    XCTAssertTrue(error.code == AspectsErrorIncompatibleBlockSignature);
+    XCTAssertTrue(error.code == AspectErrorIncompatibleBlockSignature);
     XCTAssertFalse(called, @"Flag must have not been set.");
 
     TestClass *testClass2 = [TestClass new];
@@ -363,7 +363,7 @@
         NSLog(@"called from dealloc");
     } error:&error];
     XCTAssertNil(aspectToken, @"Must NOT return a token.");
-    XCTAssertEqual(error.code, AspectsErrorSelectorDeallocPosition, @"Error must be correct");
+    XCTAssertEqual(error.code, AspectErrorSelectorDeallocPosition, @"Error must be correct");
 
     testClass = nil;
     XCTAssertFalse(deallocCalled, @"Dealloc-hook must not work.");
@@ -375,7 +375,7 @@
     __block id aspectToken = [testClass aspect_hookSelector:NSSelectorFromString(@"fakeSelector") withOptions:AspectPositionBefore usingBlock:^(id<AspectInfo> info) {
     } error:&error];
     XCTAssertNil(aspectToken, @"Must return nil token.");
-    XCTAssertEqual(error.code, AspectsErrorDoesNotRespondToSelector, @"Error code must match");
+    XCTAssertEqual(error.code, AspectErrorDoesNotRespondToSelector, @"Error code must match");
 }
 
 - (void)testInvalidGlobalSelectorHooking {
@@ -383,7 +383,7 @@
     __block id aspectToken = [TestClass aspect_hookSelector:NSSelectorFromString(@"fakeSelector2") withOptions:AspectPositionBefore usingBlock:^(id<AspectInfo> info) {
     } error:&error];
     XCTAssertNil(aspectToken, @"Must return nil token.");
-    XCTAssertEqual(error.code, AspectsErrorDoesNotRespondToSelector, @"Error code must match");
+    XCTAssertEqual(error.code, AspectErrorDoesNotRespondToSelector, @"Error code must match");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////

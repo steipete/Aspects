@@ -68,16 +68,16 @@ typedef NS_OPTIONS(NSUInteger, AspectOptions) {
 @end
 
 
-typedef NS_ENUM(NSUInteger, AspectsErrorCode) {
-    AspectsErrorSelectorBlacklisted,                   /// Selectors like release, retain, autorelease are blacklisted.
-    AspectsErrorDoesNotRespondToSelector,              /// Selector could not be found.
-    AspectsErrorSelectorDeallocPosition,               /// When hooking dealloc, only AspectPositionBefore is allowed.
-    AspectsErrorSelectorAlreadyHookedInClassHierarchy, /// Statically hooking the same method in subclasses is not allowed.
-    AspectsErrorFailedToAllocateClassPair,             /// The runtime failed creating a class pair.
-    AspectsErrorMissingBlockSignature,                 /// The block misses compile time signature info and can't be called.
-    AspectsErrorIncompatibleBlockSignature,            /// The block signature does not match the method or is too large.
+typedef NS_ENUM(NSUInteger, AspectErrorCode) {
+    AspectErrorSelectorBlacklisted,                   /// Selectors like release, retain, autorelease are blacklisted.
+    AspectErrorDoesNotRespondToSelector,              /// Selector could not be found.
+    AspectErrorSelectorDeallocPosition,               /// When hooking dealloc, only AspectPositionBefore is allowed.
+    AspectErrorSelectorAlreadyHookedInClassHierarchy, /// Statically hooking the same method in subclasses is not allowed.
+    AspectErrorFailedToAllocateClassPair,             /// The runtime failed creating a class pair.
+    AspectErrorMissingBlockSignature,                 /// The block misses compile time signature info and can't be called.
+    AspectErrorIncompatibleBlockSignature,            /// The block signature does not match the method or is too large.
 
-    AspectsErrorRemoveObjectAlreadyDeallocated = 100   /// (for removing) The object hooked is already deallocated.
+    AspectErrorRemoveObjectAlreadyDeallocated = 100   /// (for removing) The object hooked is already deallocated.
 };
 
-extern NSString *const AspectsErrorDomain;
+extern NSString *const AspectErrorDomain;
