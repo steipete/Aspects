@@ -236,7 +236,7 @@ static BOOL aspect_isMsgForwardIMP(IMP impl) {
 }
 
 static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
-    BOOL methodReturnsStructValue = NO;
+    IMP msgForwardIMP = _objc_msgForward;
 #if !defined(__arm64__)
     // As an ugly internal runtime implementation detail in the 32bit runtime, we need to determine of the method we hook returns a struct or anything larger than id.
     // https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/LowLevelABI/000-Introduction/introduction.html
@@ -244,8 +244,8 @@ static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
     // http://infocenter.arm.com/help/topic/com.arm.doc.ihi0042e/IHI0042E_aapcs.pdf (Section 5.4)
     Method method = class_getInstanceMethod(self.class, selector);
     const char *encoding = method_getTypeEncoding(method);
-    methodReturnsStructValue = encoding[0] == _C_STRUCT_B;
-    if ( methodReturnsStructValue ) {
+    BOOL methodReturnsStructValue = encoding[0] == _C_STRUCT_B;
+    if (methodReturnsStructValue) {
         @try {
             NSUInteger valueSize = 0;
             NSGetSizeAndAlignment(encoding, &valueSize, NULL);
@@ -255,8 +255,11 @@ static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
             }
         } @catch (NSException *e) {}
     }
+    if (methodReturnsStructValue) {
+        msgForwardIMP = (IMP)_objc_msgForward_stret;
+    }
 #endif
-    return methodReturnsStructValue ? (IMP)_objc_msgForward_stret : _objc_msgForward;
+    return msgForwardIMP;
 }
 
 static void aspect_prepareClassAndHookSelector(NSObject *self, SEL selector, NSError **error) {
