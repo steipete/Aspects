@@ -156,44 +156,44 @@
 #pragma mark - Generic Hook Tests
 
 - (void)testInsteadHook {
-    // Test object replacement for UILabel.
-    UILabel *testLabel = [UILabel new];
-    testLabel.text = @"Default text";
-    XCTAssertEqualObjects(testLabel.text, @"Default text", @"Must match");
-    id aspect = [testLabel aspect_hookSelector:@selector(text) withOptions:AspectPositionInstead usingBlock:^(id<AspectInfo> info) {
+    // Test object replacement.
+    CALayer *testObject = [CALayer new];
+    testObject.name = @"Default text";
+    XCTAssertEqualObjects(testObject.name, @"Default text", @"Must match");
+    id aspect = [testObject aspect_hookSelector:@selector(name) withOptions:AspectPositionInstead usingBlock:^(id<AspectInfo> info) {
         NSString *customText = @"Custom Text";
-        [info.originalInvocation setReturnValue:&customText];
+        [[info originalInvocation] setReturnValue:&customText];
     } error:NULL];
-    XCTAssertEqualObjects(testLabel.text, @"Custom Text", @"Must match");
+    XCTAssertEqualObjects(testObject.name, @"Custom Text", @"Must match");
 
     // Test second object, and ensure that this doesn't change the override of the first object.
-    UILabel *testLabel2 = [UILabel new];
-    testLabel2.text = @"Default text2";
-    XCTAssertEqualObjects(testLabel2.text, @"Default text2", @"Must match");
-    id aspect2 = [testLabel2 aspect_hookSelector:@selector(text) withOptions:AspectPositionInstead usingBlock:^(id<AspectInfo> info) {
+    CALayer *testObject2 = [CALayer new];
+    testObject2.name = @"Default text2";
+    XCTAssertEqualObjects(testObject2.name, @"Default text2", @"Must match");
+    id aspect2 = [testObject2 aspect_hookSelector:@selector(name) withOptions:AspectPositionInstead usingBlock:^(id<AspectInfo> info) {
         NSString *customText = @"Custom Text2";
-        [info.originalInvocation setReturnValue:&customText];
+        [[info originalInvocation] setReturnValue:&customText];
     } error:NULL];
-    XCTAssertEqualObjects(testLabel2.text, @"Custom Text2", @"Must match");
+    XCTAssertEqualObjects(testObject2.name, @"Custom Text2", @"Must match");
 
     // Globally override.
-    id globalAspect = [UILabel aspect_hookSelector:@selector(text) withOptions:AspectPositionInstead usingBlock:^(id<AspectInfo> info) {
+    id globalAspect = [CALayer aspect_hookSelector:@selector(name) withOptions:AspectPositionAfter usingBlock:^(id<AspectInfo> info) {
         NSString *customText = @"Global";
-        [info.originalInvocation setReturnValue:&customText];
+        [[info originalInvocation] setReturnValue:&customText];
     } error:NULL];
-    XCTAssertEqualObjects(testLabel2.text, @"Custom Text2", @"Must match");
+    XCTAssertEqualObjects(testObject2.name, @"Global", @"Must match");
 
-    UILabel *testLabel3 = [UILabel new];
-    XCTAssertEqualObjects(testLabel3.text, @"Global", @"Must match");
-    testLabel3.text = @"Test";
-    XCTAssertEqualObjects(testLabel3.text, @"Global", @"Must match");
+    CALayer *testObject3 = [CALayer new];
+    XCTAssertEqualObjects(testObject3.name, @"Global", @"Must match");
+    testObject3.name = @"Test";
+    XCTAssertEqualObjects(testObject3.name, @"Global", @"Must match");
     XCTAssertTrue([globalAspect remove], @"Must work");
-    XCTAssertEqualObjects(testLabel3.text, @"Test", @"Must match");
+    XCTAssertEqualObjects(testObject3.name, @"Test", @"Must match");
 
     // Test that removing an aspect returns the original.
-    XCTAssertEqualObjects(testLabel.text, @"Custom Text", @"Must match");
+    XCTAssertEqualObjects(testObject.name, @"Custom Text", @"Must match");
     XCTAssertTrue([aspect remove], @"Must return YES");
-    XCTAssertEqualObjects(testLabel.text, @"Default text", @"Must match");
+    XCTAssertEqualObjects(testObject.name, @"Default text", @"Must match");
     XCTAssertFalse([aspect remove], @"Must return NO");
 
     XCTAssertTrue([aspect2 remove], @"Must be able to deregister");
@@ -668,7 +668,7 @@
     // TODO: A is not yet called, we can't detect the target IMP for an invocation.
     XCTAssertTrue(A_aspect_called, @"A aspect should be called");
     XCTAssertFalse(B_aspect_called, @"B aspect should not be called");
-
+    
     XCTAssertTrue([aspectToken1 remove], @"Must be able to deregister");
 }
 
