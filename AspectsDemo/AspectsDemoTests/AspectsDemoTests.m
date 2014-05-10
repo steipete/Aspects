@@ -157,8 +157,8 @@
 
 - (void)testCALayerExploding {
     __block BOOL called = NO;
-    id globalAspect = [CALayer aspect_hookSelector:@selector(name) withOptions:AspectPositionAfter usingBlock:^(id instance, NSArray *arguments) {
-        NSLog(@"Hello from %@", instance);
+    id globalAspect = [CALayer aspect_hookSelector:@selector(name) withOptions:AspectPositionAfter usingBlock:^(id<AspectInfo> info) {
+        NSLog(@"Hello from %@", info.instance);
         called = YES;
     } error:NULL];
 
