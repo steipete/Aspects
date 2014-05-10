@@ -67,7 +67,7 @@ Aspects can be used to **dynamically add logging** for debug builds only:
 
 ``` objc
 [UIViewController aspect_hookSelector:@selector(viewWillAppear:) withOptions:AspectPositionAfter usingBlock:^(id<AspectInfo> aspectInfo, BOOL animated) {
-    NSLog(@"View Controller %@ will appear animated: %tu", object.instance, animated);
+    NSLog(@"View Controller %@ will appear animated: %tu", aspectInfo.instance, animated);
 } error:NULL];
 ```
 
