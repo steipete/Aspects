@@ -5,34 +5,34 @@
 	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
 	<false/>
 	<key>IDESourceControlProjectIdentifier</key>
-	<string>4233A0BF-3ED2-4FA2-908C-00FC08EF5EE3</string>
+	<string>DABCA236-1A56-49A0-BCD8-1DC9F6BFB1B6</string>
 	<key>IDESourceControlProjectName</key>
 	<string>AspectsDemo</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>BFDD7EB6-262A-4289-BF40-2E5B677EEC58</key>
-		<string>https://github.com/steipete/Aspects.git</string>
+		<key>312D86D6-B417-45C3-AFFE-F2D4124161B1</key>
+		<string>ssh://github.com/nickynick/Aspects.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>AspectsDemo/AspectsDemo.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>BFDD7EB6-262A-4289-BF40-2E5B677EEC58</key>
+		<key>312D86D6-B417-45C3-AFFE-F2D4124161B1</key>
 		<string>../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
-	<string>https://github.com/steipete/Aspects.git</string>
+	<string>ssh://github.com/nickynick/Aspects.git</string>
 	<key>IDESourceControlProjectVersion</key>
 	<integer>110</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>BFDD7EB6-262A-4289-BF40-2E5B677EEC58</string>
+	<string>312D86D6-B417-45C3-AFFE-F2D4124161B1</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>BFDD7EB6-262A-4289-BF40-2E5B677EEC58</string>
+			<string>312D86D6-B417-45C3-AFFE-F2D4124161B1</string>
 			<key>IDESourceControlWCCName</key>
 			<string>Aspects</string>
 		</dict>
