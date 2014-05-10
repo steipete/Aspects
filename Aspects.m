@@ -253,7 +253,7 @@ static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
             if (valueSize == 1 || valueSize == 2 || valueSize == 4 || valueSize == 8) {
                 methodReturnsStructValue = NO;
             }
-        } @catch (NSException *e) {}
+        } @catch (__unused NSException *e) {}
     }
     if (methodReturnsStructValue) {
         msgForwardIMP = (IMP)_objc_msgForward_stret;
