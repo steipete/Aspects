@@ -1,4 +1,4 @@
-Aspects v1.3.1 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects)
+Aspects v1.4.0 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects)
 ==============
 
 Delightful, simple library for aspect oriented programming by [@steipete](http://twitter.com/steipete).
@@ -11,31 +11,36 @@ Aspects extends `NSObject` with the following methods:
 
 ``` objc
 /// Adds a block of code before/instead/after the current `selector` for a specific class.
-/// If you choose `AspectPositionInstead`, the `arguments` array will contain the original invocation as last argument.
+///
+/// @param block Aspects replicates the type signature of the method being hooked.
+/// The first parameter will be `id<AspectInfo>`, followed by all parameters of the method.
+/// These parameters are optional and will be filled to match the block signature.
+/// You can even use an empty block, or one that simple gets `id<AspectInfo>`.
+///
 /// @note Hooking static methods is not supported.
 /// @return A token which allows to later deregister the aspect.
-+ (id<Aspect>)aspect_hookSelector:(SEL)selector
++ (id<AspectToken>)aspect_hookSelector:(SEL)selector
                       withOptions:(AspectOptions)options
-                       usingBlock:(void (^)(id instance, NSArray *args))block
+                       usingBlock:(id)block
                             error:(NSError **)error;
 
 /// Adds a block of code before/instead/after the current `selector` for a specific instance.
-- (id<Aspect>)aspect_hookSelector:(SEL)selector
+- (id<AspectToken>)aspect_hookSelector:(SEL)selector
                       withOptions:(AspectOptions)options
-                       usingBlock:(void (^)(id instance, NSArray *args))block
+                       usingBlock:(id)block
                             error:(NSError **)error;
 
 /// Deregister an aspect.
 /// @return YES if deregistration is successful, otherwise NO.
-id<Aspect> aspect = ...;
+id<AspectToken> aspect = ...;
 [aspect remove];
 ```
 
-Adding aspects returns an opaque token which can be used to deregister again. All calls are thread-safe.
+Adding aspects returns an opaque token of type `AspectToken` which can be used to deregister again. All calls are thread-safe.
 
 Aspects uses Objective-C message forwarding to hook into messages. This will create some overhead. Don't add aspects to methods that are called a lot. Aspects is meant for view/controller code that is not called 1000 times per second.
 
-Aspects collects all arguments in the `arguments` array. Primitive values will be boxed.
+Aspects calls and matches block arguments. Blocks without arguments are supported as well. The first block argument will be of type `id<AspectInfo>`.
 
 When to use Aspects
 -------------------
@@ -61,14 +66,14 @@ AOP lets us modularize these cross-cutting requirements, and then cleanly identi
 Aspects can be used to **dynamically add logging** for debug builds only:
 
 ``` objc
-[UIViewController aspect_hookSelector:@selector(viewWillAppear:) withOptions:AspectPositionAfter usingBlock:^(id object, NSArray *arguments) {
-    NSLog(@"View Controller %@ will appear animated: %@", object, arguments.firstObject);
+[UIViewController aspect_hookSelector:@selector(viewWillAppear:) withOptions:AspectPositionAfter usingBlock:^(id object, BOOL animated) {
+    NSLog(@"View Controller %@ will appear animated: %tu", object, animated);
 } error:NULL];
 ```
 
 -------------------
 It can be used to greatly simplify your analytics setup:
-https://github.com/orta/ARAnalytics/pull/77
+https://github.com/orta/ARAnalytics
 
 -------------------
 You can check if methods are really being called in your test cases:
@@ -78,7 +83,7 @@ You can check if methods are really being called in your test cases:
     TestClass *testClass2 = [TestClass new];
 
     __block BOOL testCallCalled = NO;
-    [testClass aspect_hookSelector:@selector(testCall) withOptions:AspectPositionAfter usingBlock:^(id object, NSArray *arguments) {
+    [testClass aspect_hookSelector:@selector(testCall) withOptions:AspectPositionAfter usingBlock:^{
         testCallCalled = YES;
     } error:NULL];
 
@@ -92,8 +97,8 @@ You can check if methods are really being called in your test cases:
 It can be really useful for debugging. Here I was curious when exactly the tap gesture changed state:
 
 ``` objc
-[_singleTapGesture aspect_hookSelector:@selector(setState:) withOptions:AspectPositionAfter usingBlock:^(__unsafe_unretained id object, NSArray *arguments) {
-    NSLog(@"%@: %@", object, arguments);
+[_singleTapGesture aspect_hookSelector:@selector(setState:) withOptions:AspectPositionAfter usingBlock:^(id<AspectInfo> aspectInfo) {
+    NSLog(@"%@: %@", aspectInfo.instance, aspectInfo.arguments);
 } error:NULL];
 ```
 
@@ -107,9 +112,8 @@ Another convenient use case is adding handlers for classes that you don't own. I
 - (void)pspdf_addWillDismissAction:(void (^)(void))action {
     PSPDFAssert(action != NULL);
 
-    __weak __typeof(self)weakSelf = self;
-    [self aspect_hookSelector:@selector(viewWillDisappear:) withOptions:AspectPositionAfter usingBlock:^(id object, NSArray *arguments) {
-        if (weakSelf.isBeingDismissed) {
+    [self aspect_hookSelector:@selector(viewWillDisappear:) withOptions:AspectPositionAfter usingBlock:^(id<AspectInfo> aspectInfo) {
+        if ([aspectInfo.instance isBeingDismissed]) {
             action();
         }
     } error:NULL];
@@ -127,18 +131,18 @@ Aspects identifies itself nicely in the stack trace, so it's easy to see if a me
 Using Aspects with non-void return types
 ----------------------------------------
 
-When you're using Aspects with `AspectPositionInstead`, the last argument of the `arguments` array will be the `NSInvocation` of the original implementation. You can use this invocation to customize the return value:
+You can use the invocation object to customize the return value:
 
 ``` objc
-    [PSPDFDrawView aspect_hookSelector:@selector(shouldProcessTouches:withEvent:) withOptions:AspectPositionInstead usingBlock:^(id object, NSArray *arguments) {
+    [PSPDFDrawView aspect_hookSelector:@selector(shouldProcessTouches:withEvent:) withOptions:AspectPositionInstead usingBlock:^(id<AspectInfo> info, NSSet *touches, UIEvent *event) {
         // Call original implementation.
         BOOL processTouches;
-        NSInvocation *invocation = arguments.lastObject;
+        NSInvocation *invocation = info.originalInvocation;
         [invocation invoke];
         [invocation getReturnValue:&processTouches];
 
         if (processTouches) {
-            processTouches = pspdf_stylusShouldProcessTouches(arguments[0], arguments[1]);
+            processTouches = pspdf_stylusShouldProcessTouches(touches, event);
             [invocation setReturnValue:&processTouches];
         }
     } error:NULL];
@@ -180,6 +184,10 @@ MIT licensed, Copyright (c) 2014 Peter Steinberger, steipete@gmail.com, [@steipe
 
 Release Notes
 -----------------
+
+Version 1.4.0
+
+- Add support for block signatures that match method signatures. (thanks to @nickynick)
 
 Version 1.3.1
 
