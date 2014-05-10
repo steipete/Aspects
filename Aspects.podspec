@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "Aspects"
-  s.version      = "1.4.0"
+  s.version      = "1.4.1"
   s.summary      = "Delightful, simple library for aspect oriented programming."
   s.homepage     = "https://github.com/steipete/Aspects"
   s.license      = { :type => 'MIT', :file => 'LICENSE' }
