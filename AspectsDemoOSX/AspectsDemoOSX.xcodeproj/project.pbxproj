@@ -17,8 +17,8 @@
 		5E435BAD1917A2920028B862 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E435BAC1917A2920028B862 /* XCTest.framework */; };
 		5E435BAE1917A2920028B862 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E435B8D1917A2910028B862 /* Cocoa.framework */; };
 		5E435BB61917A2920028B862 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5E435BB41917A2920028B862 /* InfoPlist.strings */; };
-		5E435BB81917A2920028B862 /* AspectsDemoOSXTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E435BB71917A2920028B862 /* AspectsDemoOSXTests.m */; };
 		5E435BC31917A2BE0028B862 /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E435BC21917A2BE0028B862 /* Aspects.m */; };
+		78BAEF4C191E3AD5006DABAF /* AspectsDemoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 78BAEF4B191E3AD5006DABAF /* AspectsDemoTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,9 +50,9 @@
 		5E435BAC1917A2920028B862 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		5E435BB31917A2920028B862 /* AspectsDemoOSXTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "AspectsDemoOSXTests-Info.plist"; sourceTree = "<group>"; };
 		5E435BB51917A2920028B862 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		5E435BB71917A2920028B862 /* AspectsDemoOSXTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AspectsDemoOSXTests.m; sourceTree = "<group>"; };
 		5E435BC11917A2BE0028B862 /* Aspects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Aspects.h; path = ../../Aspects.h; sourceTree = "<group>"; };
 		5E435BC21917A2BE0028B862 /* Aspects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Aspects.m; path = ../../Aspects.m; sourceTree = "<group>"; };
+		78BAEF4B191E3AD5006DABAF /* AspectsDemoTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AspectsDemoTests.m; path = ../../AspectsDemo/AspectsDemoTests/AspectsDemoTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,7 +144,7 @@
 		5E435BB11917A2920028B862 /* AspectsDemoOSXTests */ = {
 			isa = PBXGroup;
 			children = (
-				5E435BB71917A2920028B862 /* AspectsDemoOSXTests.m */,
+				78BAEF4B191E3AD5006DABAF /* AspectsDemoTests.m */,
 				5E435BB21917A2920028B862 /* Supporting Files */,
 			);
 			path = AspectsDemoOSXTests;
@@ -268,7 +268,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5E435BB81917A2920028B862 /* AspectsDemoOSXTests.m in Sources */,
+				78BAEF4C191E3AD5006DABAF /* AspectsDemoTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -473,6 +473,7 @@
 				5E435BBD1917A2920028B862 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		5E435BBE1917A2920028B862 /* Build configuration list for PBXNativeTarget "AspectsDemoOSXTests" */ = {
 			isa = XCConfigurationList;
@@ -481,6 +482,7 @@
 				5E435BC01917A2920028B862 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
