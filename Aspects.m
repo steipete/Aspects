@@ -46,8 +46,8 @@ typedef struct _AspectBlock {
 
 // Tracks a single aspect.
 @interface AspectIdentifier : NSObject
-- (id)initWithSelector:(SEL)selector object:(id)object options:(AspectOptions)options block:(id)block;
-- (void)invokeWithInfo:(id<AspectInfo>)info;
++ (instancetype)identifierWithSelector:(SEL)selector object:(id)object options:(AspectOptions)options block:(id)block error:(NSError **)error;
+- (BOOL)invokeWithInfo:(id<AspectInfo>)info;
 @property (nonatomic, assign) SEL selector;
 @property (nonatomic, strong) id block;
 @property (nonatomic, strong) NSMethodSignature *blockSignature;
@@ -118,11 +118,13 @@ static id aspect_add(id self, SEL selector, AspectOptions options, id block, NSE
     aspect_performLocked(^{
         if (aspect_isSelectorAllowedAndTrack(self, selector, options, error)) {
             AspectsContainer *aspectContainer = aspect_getContainerForObject(self, selector);
-            identifier = [[AspectIdentifier alloc] initWithSelector:selector object:self options:options block:block];
-            [aspectContainer addAspect:identifier withOptions:options];
+            identifier = [AspectIdentifier identifierWithSelector:selector object:self options:options block:block error:error];
+            if (identifier) {
+                [aspectContainer addAspect:identifier withOptions:options];
 
-            // Modify the class to allow message interception.
-            aspect_prepareClassAndHookSelector(self, selector, error);
+                // Modify the class to allow message interception.
+                aspect_prepareClassAndHookSelector(self, selector, error);
+            }
         }
     });
     return identifier;
@@ -163,9 +165,11 @@ static SEL aspect_aliasForSelector(SEL selector) {
 	return NSSelectorFromString([AspectsMessagePrefix stringByAppendingFormat:@"_%@", NSStringFromSelector(selector)]);
 }
 
-static NSMethodSignature *aspect_blockMethodSignature(id block) {
+static NSMethodSignature *aspect_blockMethodSignature(id block, NSError **error) {
     AspectBlockRef layout = (__bridge void *)block;
 	if (!(layout->flags & AspectBlockFlagsHasSignature)) {
+        NSString *description = [NSString stringWithFormat:@"The block %@ doesn't contain a type signature.", block];
+        AspectError(AspectsErrorMissingBlockSignature, description);
         return nil;
     }
 	void *desc = layout->descriptor;
@@ -174,10 +178,39 @@ static NSMethodSignature *aspect_blockMethodSignature(id block) {
 		desc += 2 * sizeof(void *);
     }
 	if (!desc) {
+        NSString *description = [NSString stringWithFormat:@"The block %@ doesn't has a type signature.", block];
+        AspectError(AspectsErrorMissingBlockSignature, description);
         return nil;
     }
 	const char *signature = (*(const char **)desc);
 	return [NSMethodSignature signatureWithObjCTypes:signature];
+}
+
+static BOOL aspect_isCompatibleBlockSignature(NSMethodSignature *blockSignature, id object, SEL selector, NSError **error) {
+    NSCParameterAssert(blockSignature);
+    NSCParameterAssert(object);
+    NSCParameterAssert(selector);
+
+    BOOL signaturesMatch = YES;
+    NSMethodSignature *methodSignature = [[object class] instanceMethodSignatureForSelector:selector];
+    if (methodSignature.numberOfArguments != blockSignature.numberOfArguments) {
+        signaturesMatch = NO;
+    }else {
+        // Argument 0 is self/block, argument 1 is SEL or id<AspectInfo>. We start comparing at argument 2.
+        for (NSUInteger idx = 2; idx < methodSignature.numberOfArguments; idx++) {
+            const char *methodType = [methodSignature getArgumentTypeAtIndex:idx];
+            const char *blockType = [blockSignature getArgumentTypeAtIndex:idx];
+            // Only compare parameter, not the optional type data.
+            if (!methodType || !blockType || methodType[0] != blockType[0]) return NO;
+        }
+    }
+
+    if (!signaturesMatch) {
+        NSString *description = [NSString stringWithFormat:@"Blog signature %@ doesn't match %@.", blockSignature, methodSignature];
+        AspectError(AspectsErrorIncompatibleBlockSignature, description);
+        return NO;
+    }
+    return YES;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -698,39 +731,53 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
 
 @implementation AspectIdentifier
 
-- (id)initWithSelector:(SEL)selector object:(id)object options:(AspectOptions)options block:(id)block {
++ (instancetype)identifierWithSelector:(SEL)selector object:(id)object options:(AspectOptions)options block:(id)block error:(NSError **)error {
     NSCParameterAssert(block);
     NSCParameterAssert(selector);
-    if (self = [super init]) {
-        _selector = selector;
-        _block = block;
-        _blockSignature = aspect_blockMethodSignature(block); // TODO: check signature compatibility, etc.
-        _options = options;
-        _object = object; // weak
+    NSMethodSignature *blockSignature = aspect_blockMethodSignature(block, error); // TODO: check signature compatibility, etc.
+    if (!aspect_isCompatibleBlockSignature(blockSignature, object, selector, error)) {
+        return nil;
     }
-    return self;
+
+    AspectIdentifier *identifier = nil;
+    if (blockSignature) {
+        identifier = [AspectIdentifier new];
+        identifier.selector = selector;
+        identifier.block = block;
+        identifier.blockSignature = blockSignature;
+        identifier.options = options;
+        identifier.object = object; // weak
+    }
+    return identifier;
 }
 
-- (void)invokeWithInfo:(id<AspectInfo>)info {
+- (BOOL)invokeWithInfo:(id<AspectInfo>)info {
     NSInvocation *blockInvocation = [NSInvocation invocationWithMethodSignature:self.blockSignature];
-    
-    if (self.blockSignature.numberOfArguments > 1) {
+    NSInvocation *originalInvocation = info.originalInvocation;
+    NSUInteger numberOfArguments = self.blockSignature.numberOfArguments;
+
+    if (numberOfArguments != originalInvocation.methodSignature.numberOfArguments) {
+        AspectLogError(@"Signature mismatch. Not calling %@", info);
+        return NO;
+    }
+
+    // The `self` of the block will be the AspectInfo.
+    if (numberOfArguments > 1) {
         [blockInvocation setArgument:&info atIndex:1];
     }
     
 	void *argBuf = NULL;
-    
-    for (NSUInteger idx = 2; idx < self.blockSignature.numberOfArguments; idx++) {
-        const char *type = [info.originalInvocation.methodSignature getArgumentTypeAtIndex:idx];
+    for (NSUInteger idx = 2; idx < numberOfArguments; idx++) {
+        const char *type = [originalInvocation.methodSignature getArgumentTypeAtIndex:idx];
 		NSUInteger argSize;
 		NSGetSizeAndAlignment(type, &argSize, NULL);
         
 		if (!(argBuf = reallocf(argBuf, argSize))) {
-            // TODO: die?
-			return;
+            AspectLogError(@"Failed to allocate memory for block invocation.");
+			return NO;
 		}
         
-		[info.originalInvocation getArgument:argBuf atIndex:idx];
+		[originalInvocation getArgument:argBuf atIndex:idx];
 		[blockInvocation setArgument:argBuf atIndex:idx];
     }
     
@@ -739,10 +786,11 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
     if (argBuf != NULL) {
         free(argBuf);
     }
+    return YES;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p, SEL:%@ object:%@ options:%tu block:%@>", self.class, self, NSStringFromSelector(self.selector), self.object, self.options, self.block];
+    return [NSString stringWithFormat:@"<%@: %p, SEL:%@ object:%@ options:%tu block:%@ signature:%@>", self.class, self, NSStringFromSelector(self.selector), self.object, self.options, self.block, self.blockSignature];
 }
 
 - (BOOL)remove {
@@ -761,6 +809,7 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
 }
 
 - (void)addAspect:(AspectIdentifier *)aspect withOptions:(AspectOptions)options {
+    NSParameterAssert(aspect);
     NSUInteger position = options&AspectPositionFilter;
     switch (position) {
         case AspectPositionBefore:  self.beforeAspects  = [(self.beforeAspects ?:@[]) arrayByAddingObject:aspect]; break;
@@ -809,6 +858,7 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
 }
 
 - (NSArray *)arguments {
+    // Lazily evaluate arguments, boxing is expensive.
     if (!_arguments) {
         _arguments = self.originalInvocation.aspects_arguments;
     }

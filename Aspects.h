@@ -64,6 +64,9 @@ typedef NS_ENUM(NSUInteger, AspectsErrorCode) {
     AspectsErrorSelectorDeallocPosition,               /// When hooking dealloc, only AspectPositionBefore is allowed.
     AspectsErrorSelectorAlreadyHookedInClassHierarchy, /// Statically hooking the same method in subclasses is not allowed.
     AspectsErrorFailedToAllocateClassPair,             /// The runtime failed creating a class pair.
+    AspectsErrorMissingBlockSignature,                 /// The block misses compile time signature infor and can't be called.
+    AspectsErrorIncompatibleBlockSignature,            /// The block signature does not match the method.
+
     AspectsErrorRemoveObjectAlreadyDeallocated = 100   /// (for removing) The object hooked is already deallocated.
 };
 
