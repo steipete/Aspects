@@ -236,20 +236,27 @@ static BOOL aspect_isMsgForwardIMP(IMP impl) {
 }
 
 static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
-    IMP msgForwardIMP = _objc_msgForward;
+    BOOL methodReturnsStructValue = NO;
 #if !defined(__arm64__)
     // As an ugly internal runtime implementation detail in the 32bit runtime, we need to determine of the method we hook returns a struct or anything larger than id.
     // https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/LowLevelABI/000-Introduction/introduction.html
     // https://github.com/ReactiveCocoa/ReactiveCocoa/issues/783
     // http://infocenter.arm.com/help/topic/com.arm.doc.ihi0042e/IHI0042E_aapcs.pdf (Section 5.4)
-    NSMethodSignature *signature = [self methodSignatureForSelector:selector];
     Method method = class_getInstanceMethod(self.class, selector);
-    const char *typeSignature = method_getTypeEncoding(method);
-    if ((*typeSignature == _C_STRUCT_B) || signature.methodReturnLength > sizeof(double)) {
-        msgForwardIMP = (IMP)_objc_msgForward_stret;
+    const char *encoding = method_getTypeEncoding(method);
+    methodReturnsStructValue = encoding[0] == _C_STRUCT_B;
+    if ( methodReturnsStructValue ) {
+        @try {
+            NSUInteger valueSize = 0;
+            NSGetSizeAndAlignment(encoding, &valueSize, NULL);
+
+            if (valueSize == 1 || valueSize == 2 || valueSize == 4 || valueSize == 8) {
+                methodReturnsStructValue = NO;
+            }
+        } @catch (NSException *e) {}
     }
 #endif
-    return msgForwardIMP;
+    return methodReturnsStructValue ? (IMP)_objc_msgForward_stret : _objc_msgForward;
 }
 
 static void aspect_prepareClassAndHookSelector(NSObject *self, SEL selector, NSError **error) {
