@@ -9,6 +9,7 @@
 #import <libkern/OSAtomic.h>
 #import <objc/runtime.h>
 #import <objc/message.h>
+#import "SPLMessageLogger/SPLMessageLogger.h"
 
 #define AspectLog(...)
 //#define AspectLog(...) do { NSLog(__VA_ARGS__); }while(0)
@@ -63,13 +64,6 @@ typedef struct _AspectBlock {
 @property (atomic, copy) NSArray *beforeAspects;
 @property (atomic, copy) NSArray *insteadAspects;
 @property (atomic, copy) NSArray *afterAspects;
-@end
-
-@interface AspectTracker : NSObject
-- (id)initWithTrackedClass:(Class)trackedClass parent:(AspectTracker *)parent;
-@property (nonatomic, strong) Class trackedClass;
-@property (nonatomic, strong) NSMutableSet *selectorNames;
-@property (nonatomic, weak) AspectTracker *parentEntry;
 @end
 
 @interface NSInvocation (Aspects)
@@ -225,7 +219,7 @@ static BOOL aspect_isCompatibleBlockSignature(NSMethodSignature *blockSignature,
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-#pragma mark - Class + Selector Preparation
+#pragma mark - C Calling Conventions
 
 static BOOL aspect_isMsgForwardIMP(IMP impl) {
     return impl == _objc_msgForward
@@ -235,13 +229,11 @@ static BOOL aspect_isMsgForwardIMP(IMP impl) {
     ;
 }
 
-static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
-    IMP msgForwardIMP = _objc_msgForward;
-#if !defined(__arm64__)
-    // As an ugly internal runtime implementation detail in the 32bit runtime, we need to determine of the method we hook returns a struct or anything larger than id.
-    // https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/LowLevelABI/000-Introduction/introduction.html
-    // https://github.com/ReactiveCocoa/ReactiveCocoa/issues/783
-    // http://infocenter.arm.com/help/topic/com.arm.doc.ihi0042e/IHI0042E_aapcs.pdf (Section 5.4)
+// We need to honor C calling conventions, where stuct-based returns have a different stack layout.
+// This is platform dependant and not easy to figure out.
+// https://github.com/ReactiveCocoa/ReactiveCocoa/issues/783
+// http://infocenter.arm.com/help/topic/com.arm.doc.ihi0042e/IHI0042E_aapcs.pdf (Section 5.4)
+static BOOL aspect_methodReturnsStructValue(NSObject *self, SEL selector) {
     Method method = class_getInstanceMethod(self.class, selector);
     const char *encoding = method_getTypeEncoding(method);
     BOOL methodReturnsStructValue = encoding[0] == _C_STRUCT_B;
@@ -255,12 +247,21 @@ static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
             }
         } @catch (__unused NSException *e) {}
     }
-    if (methodReturnsStructValue) {
-        msgForwardIMP = (IMP)_objc_msgForward_stret;
+    return methodReturnsStructValue;
+}
+
+static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
+    IMP msgForwardIMP = _objc_msgForward;
+#if !defined(__arm64__)
+    if (aspect_methodReturnsStructValue(self, selector)) {
+        msgForwardIMP = (IMP)_objc_msgForward_stret; // OBJC_ARM64_UNAVAILABLE
     }
 #endif
     return msgForwardIMP;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark - Class + Selector Preparation
 
 static void aspect_prepareClassAndHookSelector(NSObject *self, SEL selector, NSError **error) {
     NSCParameterAssert(selector);
@@ -307,9 +308,6 @@ static void aspect_cleanupHookedClassAndSelector(NSObject *self, SEL selector) {
         class_replaceMethod(klass, selector, originalIMP, typeEncoding);
         AspectLog(@"Aspects: Removed hook for -[%@ %@].", klass, NSStringFromSelector(selector));
     }
-
-    // Deregister global tracked selector
-    aspect_deregisterTrackedSelector(self, selector);
 
     // Get the aspect container and check if there are any hooks remaining. Clean up if there are not.
     AspectsContainer *container = aspect_getContainerForObject(self, selector);
@@ -549,15 +547,6 @@ static void aspect_destroyContainerForObject(id<NSObject> self, SEL selector) {
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Selector Blacklist Checking
 
-static NSMutableDictionary *aspect_getSwizzledClassesDict() {
-    static NSMutableDictionary *swizzledClassesDict;
-    static dispatch_once_t pred;
-    dispatch_once(&pred, ^{
-        swizzledClassesDict = [NSMutableDictionary new];
-    });
-    return swizzledClassesDict;
-}
-
 static BOOL aspect_isSelectorAllowedAndTrack(NSObject *self, SEL selector, AspectOptions options, NSError **error) {
     static NSSet *disallowedSelectorList;
     static dispatch_once_t pred;
@@ -587,80 +576,7 @@ static BOOL aspect_isSelectorAllowedAndTrack(NSObject *self, SEL selector, Aspec
         return NO;
     }
 
-    // Search for the current class and the class hierarchy IF we are modifying a class object
-    if (class_isMetaClass(object_getClass(self))) {
-        Class klass = [self class];
-        NSMutableDictionary *swizzledClassesDict = aspect_getSwizzledClassesDict();
-        Class currentClass = [self class];
-        do {
-            AspectTracker *tracker = swizzledClassesDict[currentClass];
-            if ([tracker.selectorNames containsObject:selectorName]) {
-
-                // Find the topmost class for the log.
-                if (tracker.parentEntry) {
-                    AspectTracker *topmostEntry = tracker.parentEntry;
-                    while (topmostEntry.parentEntry) {
-                        topmostEntry = topmostEntry.parentEntry;
-                    }
-                    NSString *errorDescription = [NSString stringWithFormat:@"Error: %@ already hooked in %@. A method can only be hooked once per class hierarchy.", selectorName, NSStringFromClass(topmostEntry.trackedClass)];
-                    AspectError(AspectErrorSelectorAlreadyHookedInClassHierarchy, errorDescription);
-                    return NO;
-                }else if (klass == currentClass) {
-                    // Already modified and topmost!
-                    return YES;
-                }
-            }
-        }while ((currentClass = class_getSuperclass(currentClass)));
-
-        // Add the selector as being modified.
-        currentClass = klass;
-        AspectTracker *parentTracker = nil;
-        do {
-            AspectTracker *tracker = swizzledClassesDict[currentClass];
-            if (!tracker) {
-                tracker = [[AspectTracker alloc] initWithTrackedClass:currentClass parent:parentTracker];
-                swizzledClassesDict[(id<NSCopying>)currentClass] = tracker;
-            }
-            [tracker.selectorNames addObject:selectorName];
-            // All superclasses get marked as having a subclass that is modified.
-            parentTracker = tracker;
-        }while ((currentClass = class_getSuperclass(currentClass)));
-    }
-
     return YES;
-}
-
-static void aspect_deregisterTrackedSelector(id self, SEL selector) {
-    if (!class_isMetaClass(object_getClass(self))) return;
-
-    NSMutableDictionary *swizzledClassesDict = aspect_getSwizzledClassesDict();
-    NSString *selectorName = NSStringFromSelector(selector);
-    Class currentClass = [self class];
-    do {
-        AspectTracker *tracker = swizzledClassesDict[currentClass];
-        if (tracker) {
-            [tracker.selectorNames removeObject:selectorName];
-            if (tracker.selectorNames.count == 0) {
-                [swizzledClassesDict removeObjectForKey:tracker];
-            }
-        }
-    }while ((currentClass = class_getSuperclass(currentClass)));
-}
-
-@end
-
-@implementation AspectTracker
-
-- (id)initWithTrackedClass:(Class)trackedClass parent:(AspectTracker *)parent {
-    if (self = [super init]) {
-        _trackedClass = trackedClass;
-        _parentEntry = parent;
-        _selectorNames = [NSMutableSet new];
-    }
-    return self;
-}
-- (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %@, trackedClass: %@, selectorNames:%@, parent:%p>", self.class, self, NSStringFromClass(self.trackedClass), self.selectorNames, self.parentEntry];
 }
 
 @end
