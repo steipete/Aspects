@@ -674,18 +674,19 @@
 
     id aspectToken2 = [B aspect_hookSelector:@selector(foo) withOptions:AspectPositionBefore usingBlock:^(id<AspectInfo> info) {
         NSLog(@"before -[B foo]");
+        XCTAssertFalse(A_aspect_called, @"A aspect should not yet been called");
         B_aspect_called = YES;
     } error:NULL];
-    XCTAssertNil(aspectToken2, @"Must not return a token");
+    XCTAssertNotNil(aspectToken2, @"Must return a token");
 
     B *b = [B new];
     [b foo];
 
-    // TODO: A is not yet called, we can't detect the target IMP for an invocation.
     XCTAssertTrue(A_aspect_called, @"A aspect should be called");
-    XCTAssertFalse(B_aspect_called, @"B aspect should not be called");
+    XCTAssertTrue(B_aspect_called, @"B aspect should be called");
     
     XCTAssertTrue([aspectToken1 remove], @"Must be able to deregister");
+    XCTAssertTrue([aspectToken2 remove], @"Must be able to deregister");
 }
 
 @end
