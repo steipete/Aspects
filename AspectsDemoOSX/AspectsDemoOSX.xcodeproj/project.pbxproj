@@ -17,7 +17,18 @@
 		5E435BAD1917A2920028B862 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E435BAC1917A2920028B862 /* XCTest.framework */; };
 		5E435BAE1917A2920028B862 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E435B8D1917A2910028B862 /* Cocoa.framework */; };
 		5E435BB61917A2920028B862 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5E435BB41917A2920028B862 /* InfoPlist.strings */; };
-		5E435BC31917A2BE0028B862 /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E435BC21917A2BE0028B862 /* Aspects.m */; };
+		782409211920214C00F0A80B /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 7824091B1920214C00F0A80B /* Aspects.m */; };
+		782409221920214C00F0A80B /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 7824091B1920214C00F0A80B /* Aspects.m */; };
+		782409231920214C00F0A80B /* aspects_forwarding_trampoline_arm64.s in Sources */ = {isa = PBXBuildFile; fileRef = 7824091C1920214C00F0A80B /* aspects_forwarding_trampoline_arm64.s */; };
+		782409241920214C00F0A80B /* aspects_forwarding_trampoline_arm64.s in Sources */ = {isa = PBXBuildFile; fileRef = 7824091C1920214C00F0A80B /* aspects_forwarding_trampoline_arm64.s */; };
+		782409251920214C00F0A80B /* aspects_forwarding_trampoline_armv7.s in Sources */ = {isa = PBXBuildFile; fileRef = 7824091D1920214C00F0A80B /* aspects_forwarding_trampoline_armv7.s */; };
+		782409261920214C00F0A80B /* aspects_forwarding_trampoline_armv7.s in Sources */ = {isa = PBXBuildFile; fileRef = 7824091D1920214C00F0A80B /* aspects_forwarding_trampoline_armv7.s */; };
+		782409271920214C00F0A80B /* aspects_forwarding_trampoline_stret_armv7.s in Sources */ = {isa = PBXBuildFile; fileRef = 7824091E1920214C00F0A80B /* aspects_forwarding_trampoline_stret_armv7.s */; };
+		782409281920214C00F0A80B /* aspects_forwarding_trampoline_stret_armv7.s in Sources */ = {isa = PBXBuildFile; fileRef = 7824091E1920214C00F0A80B /* aspects_forwarding_trampoline_stret_armv7.s */; };
+		782409291920214C00F0A80B /* aspects_forwarding_trampoline_x86.s in Sources */ = {isa = PBXBuildFile; fileRef = 7824091F1920214C00F0A80B /* aspects_forwarding_trampoline_x86.s */; };
+		7824092A1920214C00F0A80B /* aspects_forwarding_trampoline_x86.s in Sources */ = {isa = PBXBuildFile; fileRef = 7824091F1920214C00F0A80B /* aspects_forwarding_trampoline_x86.s */; };
+		7824092B1920214C00F0A80B /* aspects_forwarding_trampoline_x86_stret.s in Sources */ = {isa = PBXBuildFile; fileRef = 782409201920214C00F0A80B /* aspects_forwarding_trampoline_x86_stret.s */; };
+		7824092C1920214C00F0A80B /* aspects_forwarding_trampoline_x86_stret.s in Sources */ = {isa = PBXBuildFile; fileRef = 782409201920214C00F0A80B /* aspects_forwarding_trampoline_x86_stret.s */; };
 		78BAEF4C191E3AD5006DABAF /* AspectsDemoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 78BAEF4B191E3AD5006DABAF /* AspectsDemoTests.m */; };
 /* End PBXBuildFile section */
 
@@ -50,8 +61,13 @@
 		5E435BAC1917A2920028B862 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		5E435BB31917A2920028B862 /* AspectsDemoOSXTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "AspectsDemoOSXTests-Info.plist"; sourceTree = "<group>"; };
 		5E435BB51917A2920028B862 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		5E435BC11917A2BE0028B862 /* Aspects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Aspects.h; path = ../../Aspects.h; sourceTree = "<group>"; };
-		5E435BC21917A2BE0028B862 /* Aspects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Aspects.m; path = ../../Aspects.m; sourceTree = "<group>"; };
+		7824091A1920214C00F0A80B /* Aspects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Aspects.h; sourceTree = "<group>"; };
+		7824091B1920214C00F0A80B /* Aspects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Aspects.m; sourceTree = "<group>"; };
+		7824091C1920214C00F0A80B /* aspects_forwarding_trampoline_arm64.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = aspects_forwarding_trampoline_arm64.s; sourceTree = "<group>"; };
+		7824091D1920214C00F0A80B /* aspects_forwarding_trampoline_armv7.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = aspects_forwarding_trampoline_armv7.s; sourceTree = "<group>"; };
+		7824091E1920214C00F0A80B /* aspects_forwarding_trampoline_stret_armv7.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = aspects_forwarding_trampoline_stret_armv7.s; sourceTree = "<group>"; };
+		7824091F1920214C00F0A80B /* aspects_forwarding_trampoline_x86.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = aspects_forwarding_trampoline_x86.s; sourceTree = "<group>"; };
+		782409201920214C00F0A80B /* aspects_forwarding_trampoline_x86_stret.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = aspects_forwarding_trampoline_x86_stret.s; sourceTree = "<group>"; };
 		78BAEF4B191E3AD5006DABAF /* AspectsDemoTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AspectsDemoTests.m; path = ../../AspectsDemo/AspectsDemoTests/AspectsDemoTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -118,8 +134,7 @@
 		5E435B931917A2910028B862 /* AspectsDemoOSX */ = {
 			isa = PBXGroup;
 			children = (
-				5E435BC11917A2BE0028B862 /* Aspects.h */,
-				5E435BC21917A2BE0028B862 /* Aspects.m */,
+				782409191920214C00F0A80B /* Aspects */,
 				5E435B9F1917A2910028B862 /* AspectsAppDelegate.h */,
 				5E435BA01917A2910028B862 /* AspectsAppDelegate.m */,
 				5E435BA21917A2910028B862 /* MainMenu.xib */,
@@ -157,6 +172,21 @@
 				5E435BB41917A2920028B862 /* InfoPlist.strings */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		782409191920214C00F0A80B /* Aspects */ = {
+			isa = PBXGroup;
+			children = (
+				7824091A1920214C00F0A80B /* Aspects.h */,
+				7824091B1920214C00F0A80B /* Aspects.m */,
+				7824091C1920214C00F0A80B /* aspects_forwarding_trampoline_arm64.s */,
+				7824091D1920214C00F0A80B /* aspects_forwarding_trampoline_armv7.s */,
+				7824091E1920214C00F0A80B /* aspects_forwarding_trampoline_stret_armv7.s */,
+				7824091F1920214C00F0A80B /* aspects_forwarding_trampoline_x86.s */,
+				782409201920214C00F0A80B /* aspects_forwarding_trampoline_x86_stret.s */,
+			);
+			name = Aspects;
+			path = ../../Aspects;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -259,8 +289,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				5E435BA11917A2910028B862 /* AspectsAppDelegate.m in Sources */,
+				782409291920214C00F0A80B /* aspects_forwarding_trampoline_x86.s in Sources */,
+				782409251920214C00F0A80B /* aspects_forwarding_trampoline_armv7.s in Sources */,
+				782409271920214C00F0A80B /* aspects_forwarding_trampoline_stret_armv7.s in Sources */,
 				5E435B9A1917A2910028B862 /* main.m in Sources */,
-				5E435BC31917A2BE0028B862 /* Aspects.m in Sources */,
+				782409231920214C00F0A80B /* aspects_forwarding_trampoline_arm64.s in Sources */,
+				782409211920214C00F0A80B /* Aspects.m in Sources */,
+				7824092B1920214C00F0A80B /* aspects_forwarding_trampoline_x86_stret.s in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -268,7 +303,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7824092C1920214C00F0A80B /* aspects_forwarding_trampoline_x86_stret.s in Sources */,
 				78BAEF4C191E3AD5006DABAF /* AspectsDemoTests.m in Sources */,
+				782409261920214C00F0A80B /* aspects_forwarding_trampoline_armv7.s in Sources */,
+				7824092A1920214C00F0A80B /* aspects_forwarding_trampoline_x86.s in Sources */,
+				782409241920214C00F0A80B /* aspects_forwarding_trampoline_arm64.s in Sources */,
+				782409281920214C00F0A80B /* aspects_forwarding_trampoline_stret_armv7.s in Sources */,
+				782409221920214C00F0A80B /* Aspects.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
