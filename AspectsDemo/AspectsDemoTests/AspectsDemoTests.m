@@ -48,6 +48,7 @@
 - (void)test;
 @end
 
+
 @implementation TestWithCustomForwardInvocation
 
 - (NSMethodSignature *)methodSignatureForSelector:(SEL)aSelector {
@@ -281,6 +282,44 @@
     XCTAssertTrue(testCallCalled, @"Calling testCallAndExecuteBlock must call testCall");
     XCTAssertTrue([aspectToken remove], @"Must be able to deregister");
 }
+
+- (void)testLocalAndGlobalOverride {
+    TestClass *testClass = [TestClass new];
+
+    __block BOOL testCallCalledLocal = NO;
+    id aspectToken = [testClass aspect_hookSelector:@selector(testCall) withOptions:AspectPositionAfter usingBlock:^(id<AspectInfo> info) {
+        testCallCalledLocal = YES;
+    } error:NULL];
+
+    __block BOOL testCallCalledGlobal = NO;
+    id globalToken = [TestClass aspect_hookSelector:@selector(testCall) withOptions:0 usingBlock:^{
+        testCallCalledGlobal = YES;
+    } error:NULL];
+
+    __block BOOL testCallCalledLocal2 = NO;
+    id aspectToken2 = [testClass aspect_hookSelector:@selector(testCall) withOptions:AspectPositionAfter usingBlock:^(id<AspectInfo> info) {
+        testCallCalledLocal2 = YES;
+    } error:NULL];
+
+    __block BOOL testCallCalledGlobal2 = NO;
+    id globalToken2 = [TestClass aspect_hookSelector:@selector(testCall) withOptions:0 usingBlock:^{
+        testCallCalledGlobal2 = YES;
+    } error:NULL];
+
+    [testClass testCall];
+
+    XCTAssertNotNil(globalToken);
+    XCTAssertNotNil(aspectToken);
+    XCTAssertNotNil(globalToken2);
+    XCTAssertNotNil(aspectToken2);
+    XCTAssertTrue(testCallCalledLocal);
+    XCTAssertTrue(testCallCalledGlobal);
+    XCTAssertTrue(testCallCalledLocal2);
+    XCTAssertTrue(testCallCalledGlobal2);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark - Test Return Values
 
 - (void)testStructReturn {
     TestClass *testClass = [TestClass new];
@@ -573,7 +612,7 @@
 //    [testClass aspect_hookSelector:@selector(setString:) withOptions:AspectPositionAfter usingBlock:^(id instance, NSArray *arguments) {
 //        NSLog(@"Aspect hook!");
 //        hookCalled = YES;
-//    }];
+//    } error:NULL];
 //
 //    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must be not set");
 //    testClass.string = @"test";
@@ -626,6 +665,12 @@
 @end
 
 @implementation A
+- (id)forwardingTargetForSelector:(SEL)aSelector {
+    return self;
+}
+- (BOOL)respondsToSelector:(SEL)aSelector {
+    return YES;
+}
 - (void)foo {
     NSLog(@"%s", __PRETTY_FUNCTION__);
 }
@@ -643,26 +688,25 @@
 @interface AspectsSelectorTests : XCTestCase @end
 @implementation AspectsSelectorTests
 
-//- (void)testSelectorMangling {
-//    __block BOOL A_aspect_called = NO;
-//    __block BOOL B_aspect_called = NO;
-//    [B aspect_hookSelector:@selector(foo) withOptions:AspectPositionBefore usingBlock:^(id instance, NSArray *arguments) {
-//        NSLog(@"before -[B foo]");
-//        B_aspect_called = YES;
-//    }];
-//    [A aspect_hookSelector:@selector(foo) withOptions:AspectPositionBefore usingBlock:^(id instance, NSArray *arguments) {
-//        NSLog(@"before -[A foo]");
-//        A_aspect_called = YES;
-//    }];
-//
-//    B *b = [B new];
-//    [b foo];
-//
-//    XCTAssertTrue(B_aspect_called, @"B aspect should be called");
-//    XCTAssertFalse(A_aspect_called, @"A aspect should not be called");
-//}
+- (void)testSelectorMangling {
+    __block BOOL A_aspect_called = NO;
+    __block BOOL B_aspect_called = NO;
+    [B aspect_hookSelector:@selector(foo) withOptions:AspectPositionBefore usingBlock:^(id<AspectInfo> info) {
+        NSLog(@"before -[B foo]");
+        B_aspect_called = YES;
+    } error:NULL];
+    [A aspect_hookSelector:@selector(foo) withOptions:AspectPositionBefore usingBlock:^(id<AspectInfo> info) {
+        NSLog(@"before -[A foo]");
+        A_aspect_called = YES;
+    } error:NULL];
 
-// TODO: Since tests change the runtime, it's hard to clean up.
+    B *b = [B new];
+    [b foo];
+
+    XCTAssertTrue(B_aspect_called, @"B aspect should be called");
+    XCTAssertTrue(A_aspect_called, @"A aspect should be called");
+}
+
 - (void)testSelectorMangling2 {
     __block BOOL A_aspect_called = NO;
     __block BOOL B_aspect_called = NO;
@@ -674,18 +718,74 @@
 
     id aspectToken2 = [B aspect_hookSelector:@selector(foo) withOptions:AspectPositionBefore usingBlock:^(id<AspectInfo> info) {
         NSLog(@"before -[B foo]");
+        XCTAssertFalse(A_aspect_called, @"A aspect should not yet been called");
         B_aspect_called = YES;
     } error:NULL];
-    XCTAssertNil(aspectToken2, @"Must not return a token");
+    XCTAssertNotNil(aspectToken2, @"Must return a token");
 
     B *b = [B new];
     [b foo];
 
-    // TODO: A is not yet called, we can't detect the target IMP for an invocation.
     XCTAssertTrue(A_aspect_called, @"A aspect should be called");
-    XCTAssertFalse(B_aspect_called, @"B aspect should not be called");
+    XCTAssertTrue(B_aspect_called, @"B aspect should be called");
     
     XCTAssertTrue([aspectToken1 remove], @"Must be able to deregister");
+    XCTAssertTrue([aspectToken2 remove], @"Must be able to deregister");
+}
+
+@end
+
+///////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark - Test Singletons
+
+@interface TestSingleton : NSObject
++ (instancetype)sharedInstance;
+@end
+static TestSingleton *_instance;
+@implementation TestSingleton
+
++ (instancetype)sharedInstance {
+    static dispatch_once_t pred;
+    dispatch_once(&pred, ^{
+        _instance = [TestSingleton new];
+    });
+    return _instance;
+}
+
+@end
+
+@interface AspectStaticOverrideTests : XCTestCase @end
+@implementation AspectStaticOverrideTests
+
+- (void)testCustomizingSingleton {
+    XCTAssertEqualObjects(TestSingleton.sharedInstance, _instance, @"Must be the same");
+
+    NSError *error = nil;
+    id<AspectToken> token = [TestSingleton aspect_hookSelector:@selector(sharedInstance) withOptions:AspectPositionInstead usingBlock:^(id<AspectInfo> info) {
+        id returnValue = NSNull.null;
+        [info.originalInvocation setReturnValue:&returnValue];
+    } error:&error];
+
+    XCTAssertNotNil(token);
+    XCTAssertEqualObjects(TestSingleton.sharedInstance, NSNull.null, @"Must be the same");
+
+    XCTAssertTrue([token remove]);
+    XCTAssertEqualObjects(TestSingleton.sharedInstance, _instance, @"Must be the same");
+}
+
+- (void)testCustomizingSingletonWithReturnValue {
+    XCTAssertEqualObjects(TestSingleton.sharedInstance, _instance, @"Must be the same");
+
+    NSError *error = nil;
+    id<AspectToken> token = [TestSingleton aspect_hookSelector:@selector(sharedInstance) withOptions:AspectPositionInstead usingBlock:^id {
+        return NSNull.null;
+    } error:&error];
+
+    XCTAssertNotNil(token);
+    XCTAssertEqualObjects(TestSingleton.sharedInstance, NSNull.null, @"Must be the same");
+
+    XCTAssertTrue([token remove]);
+    XCTAssertEqualObjects(TestSingleton.sharedInstance, _instance, @"Must be the same");
 }
 
 @end

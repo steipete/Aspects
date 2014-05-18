@@ -8,11 +8,13 @@
 #import <Foundation/Foundation.h>
 
 typedef NS_OPTIONS(NSUInteger, AspectOptions) {
-    AspectPositionAfter   = 0,            /// Called after the original implementation (default)
-    AspectPositionInstead = 1,            /// Will replace the original implementation.
-    AspectPositionBefore  = 2,            /// Called before the original implementation.
+    AspectPositionAfter   = 0,              /// Called after the original implementation (default)
+    AspectPositionInstead = 1,              /// Will replace the original implementation.
+    AspectPositionBefore  = 2,              /// Called before the original implementation.
     
-    AspectOptionAutomaticRemoval = 1 << 3 /// Will remove the hook after the first execution.
+    AspectOptionAutomaticRemoval  = 1 << 3, /// Will remove the hook after the first execution.
+
+    AspectOptionPreferClassMethod = 1 << 4  /// Will prefer class method, if both class and instance method exists. 
 };
 
 /// Opaque Aspect Token that allows to deregister the hook.

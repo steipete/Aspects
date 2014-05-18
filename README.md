@@ -1,7 +1,7 @@
-Aspects v1.4.1 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects)
+Aspects v1.5.0 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects)
 ==============
 
-Delightful, simple library for aspect oriented programming by [@steipete](http://twitter.com/steipete).
+A delightful, simple library for aspect oriented programming by [@steipete](http://twitter.com/steipete).
 
 **Think of Aspects as method swizzling on steroids. It allows you to add code to existing methods per class or per instance**, whilst thinking of the insertion point e.g. before/instead/after. Aspects automatically deals with calling super and is easier to use than regular method swizzling.
 
@@ -89,7 +89,7 @@ You can check if methods are really being called in your test cases:
 
     [testClass2 testCallAndExecuteBlock:^{
         [testClass testCall];
-    } error:NULL];
+    }];
     XCTAssertTrue(testCallCalled, @"Calling testCallAndExecuteBlock must call testCall");
 }
 ```
@@ -158,17 +158,16 @@ Compatibility and Limitations
 -----------------------------
 Aspects uses quite some runtime trickery to achieve what it does. You can mostly mix this with regular method swizzling.
 
-An important limitation is that for class-based hooking, a method can only be hooked once within the subclass hierarchy. [See #2](https://github.com/steipete/Aspects/issues/2)
-This does not apply for objects that are hooked. Aspects creates a dynamic subclass here and has full control.
-
 KVO works if observers are created after your calls `aspect_hookSelector:` It most likely will crash the other way around.
 Still looking for workarounds here - any help apprechiated.
 
-Because of ugly implementation details on the ObjC runtime, methods that return unions that also contain structs might not work correctly unless this code runs on the arm64 runtime.
+Aspects uses a custom trampoline written in raw assembly which is currently only available on i386, armv7, armv7s and arm64.
 
 Credits
 -------
 The idea to use `_objc_msgForward` and parts of the `NSInvocation` argument selection is from the excellent [ReactiveCocoa](https://github.com/ReactiveCocoa/ReactiveCocoa) from the GitHub guys. [This article](http://codeshaker.blogspot.co.at/2012/01/aop-delivered.html) explains how it works under the hood.
+
+The trampoline code is based on work by Oliver Letterer <oliver.letterer@gmail.com>.
 
 
 Supported iOS & SDK Versions
@@ -184,6 +183,11 @@ MIT licensed, Copyright (c) 2014 Peter Steinberger, steipete@gmail.com, [@steipe
 
 Release Notes
 -----------------
+
+Version 1.5.0
+
+- Use custom trampoline code to allow hooking the same method within the class hierarchy.
+- Allow to hook class methods.
 
 Version 1.4.1
 
