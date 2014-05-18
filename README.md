@@ -1,7 +1,7 @@
 Aspects v1.5.0 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects)
 ==============
 
-Delightful, simple library for aspect oriented programming by [@steipete](http://twitter.com/steipete).
+A delightful, simple library for aspect oriented programming by [@steipete](http://twitter.com/steipete).
 
 **Think of Aspects as method swizzling on steroids. It allows you to add code to existing methods per class or per instance**, whilst thinking of the insertion point e.g. before/instead/after. Aspects automatically deals with calling super and is easier to use than regular method swizzling.
 
@@ -89,7 +89,7 @@ You can check if methods are really being called in your test cases:
 
     [testClass2 testCallAndExecuteBlock:^{
         [testClass testCall];
-    } error:NULL];
+    }];
     XCTAssertTrue(testCallCalled, @"Calling testCallAndExecuteBlock must call testCall");
 }
 ```
@@ -187,6 +187,7 @@ Release Notes
 Version 1.5.0
 
 - Use custom trampoline code to allow hooking the same method within the class hierarchy.
+- Allow to hook class methods.
 
 Version 1.4.1
 
