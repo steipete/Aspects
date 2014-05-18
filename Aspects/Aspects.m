@@ -869,6 +869,13 @@ static BOOL aspect_isCompatibleBlockSignature(NSMethodSignature *blockSignature,
         AspectError(AspectErrorIncompatibleBlockSignature, desc);
         return NO;
     }
+
+    // Warn if there's a return type in the block signature that does not make sense.
+    const char *blockReturn = blockSignature.methodReturnType;
+    if (blockReturn[0] != _C_VOID && blockReturn[0] != methodSignature.methodReturnType[0]) {
+        AspectLogError(@"Warning! Block return type %s will be ignored.", blockSignature.methodReturnType);
+    }
+
     return YES;
 }
 
@@ -897,6 +904,22 @@ static BOOL aspect_isCompatibleBlockSignature(NSMethodSignature *blockSignature,
                                                                        selfObject:info
                                                           argumentsFromInvocation:info.originalInvocation];
     [invocation invokeWithTarget:self.block];
+
+    // Transfer the return value if the hooked method returns data.
+    const char *methodReturnType = invocation.methodSignature.methodReturnType;
+    if (methodReturnType[0] != _C_VOID && self.blockSignature.methodReturnType[0] == methodReturnType[0]) {
+        NSUInteger argSize;
+        NSGetSizeAndAlignment(methodReturnType, &argSize, NULL);
+
+        void *argBuf = NULL;
+        if (!(argBuf = reallocf(argBuf, argSize))) {
+            AspectLogError(@"Failed to allocate memory for block invocation.");
+            return;
+        }
+        [invocation getReturnValue:argBuf];
+        [info.originalInvocation setReturnValue:argBuf];
+        free(argBuf);
+    }
 }
 
 - (NSString *)description {
