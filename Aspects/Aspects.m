@@ -333,8 +333,8 @@ static Class aspect_hookClass(NSObject *self, BOOL isClassMethod, NSError **erro
 
 		aspect_swizzleForwardInvocation(subclass);
 		aspect_swizzleMethodSignature(subclass);
-		aspect_hookedGetClass(subclass, statedClass);
-		aspect_hookedGetClass(object_getClass(subclass), statedClass);
+		aspect_swizzleGetClass(subclass, statedClass);
+		aspect_swizzleGetClass(object_getClass(subclass), statedClass);
 		objc_registerClassPair(subclass);
 	}
 
@@ -388,7 +388,7 @@ static void aspect_swizzleMethodSignature(Class klass) {
 	class_replaceMethod(klass, selector, newIMP, method_getTypeEncoding(method));
 }
 
-static void aspect_hookedGetClass(Class klass, Class statedClass) {
+static void aspect_swizzleGetClass(Class klass, Class statedClass) {
     NSCParameterAssert(klass);
     NSCParameterAssert(statedClass);
 	Method method = class_getInstanceMethod(klass, @selector(class));
