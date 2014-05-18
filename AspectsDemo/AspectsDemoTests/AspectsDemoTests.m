@@ -48,6 +48,7 @@
 - (void)test;
 @end
 
+
 @implementation TestWithCustomForwardInvocation
 
 - (NSMethodSignature *)methodSignatureForSelector:(SEL)aSelector {
@@ -730,6 +731,61 @@
     
     XCTAssertTrue([aspectToken1 remove], @"Must be able to deregister");
     XCTAssertTrue([aspectToken2 remove], @"Must be able to deregister");
+}
+
+@end
+
+///////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark - Test Singletons
+
+@interface TestSingleton : NSObject
++ (instancetype)sharedInstance;
+@end
+static TestSingleton *_instance;
+@implementation TestSingleton
+
++ (instancetype)sharedInstance {
+    static dispatch_once_t pred;
+    dispatch_once(&pred, ^{
+        _instance = [TestSingleton new];
+    });
+    return _instance;
+}
+
+@end
+
+@interface AspectStaticOverrideTests : XCTestCase @end
+@implementation AspectStaticOverrideTests
+
+- (void)testCustomizingSingleton {
+    XCTAssertEqualObjects(TestSingleton.sharedInstance, _instance, @"Must be the same");
+
+    NSError *error = nil;
+    id<AspectToken> token = [TestSingleton aspect_hookSelector:@selector(sharedInstance) withOptions:AspectPositionInstead usingBlock:^(id<AspectInfo> info) {
+        id returnValue = NSNull.null;
+        [info.originalInvocation setReturnValue:&returnValue];
+    } error:&error];
+
+    XCTAssertNotNil(token);
+    XCTAssertEqualObjects(TestSingleton.sharedInstance, NSNull.null, @"Must be the same");
+
+    XCTAssertTrue([token remove]);
+    XCTAssertEqualObjects(TestSingleton.sharedInstance, _instance, @"Must be the same");
+}
+
+- (void)testCustomizingSingletonWithReturnValue {
+    XCTAssertEqualObjects(TestSingleton.sharedInstance, _instance, @"Must be the same");
+
+    NSError *error = nil;
+    id<AspectToken> token = [TestSingleton aspect_hookSelector:@selector(sharedInstance) withOptions:AspectPositionInstead usingBlock:^id {
+        return NSNull.null;
+    } error:&error];
+
+    XCTAssertNotNil(token);
+    XCTAssertEqualObjects(TestSingleton.sharedInstance, NSNull.null, @"Must be the same");
+
+    XCTAssertTrue([token remove]);
+    XCTAssertEqualObjects(TestSingleton.sharedInstance, _instance, @"Must be the same");
 }
 
 @end
