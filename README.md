@@ -1,7 +1,7 @@
 Aspects v1.4.1 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects)
 ==============
 
-Delightful, simple library for aspect oriented programming by [@steipete](http://twitter.com/steipete).
+A delightful, simple library for aspect oriented programming by [@steipete](http://twitter.com/steipete).
 
 **Think of Aspects as method swizzling on steroids. It allows you to add code to existing methods per class or per instance**, whilst thinking of the insertion point e.g. before/instead/after. Aspects automatically deals with calling super and is easier to use than regular method swizzling.
 
@@ -44,19 +44,18 @@ Aspects calls and matches block arguments. Blocks without arguments are supporte
 
 When to use Aspects
 -------------------
-Aspect-oriented programming (AOP) is used to encapsulate "cross-cutting" concerns. These are the kind of requirements that *cut-accross* many modules in your system, and so cannot be encapsulated using normal Object Oriented programming. Some examples of these kinds of requirements: 
+Aspect-oriented programming (AOP) is used to encapsulate "cross-cutting" concerns. These are the kind of requirements that *cut-accross* many modules in your system, and so cannot be encapsulated using normal object oriented programming. Some examples of these kinds of requirements: 
 
 * *Whenever* a user invokes a method on the service client, security should be checked. 
 * *Whenever* a user interacts with the store, a genius suggestion should be presented, based on their interaction. 
 * *All* calls should be logged. 
 
-If we implemented the above requirements using regular OO there'd be some drawbacks: 
+If we implemented the above requirements using regular OOP there'd be some drawbacks: 
 
-
-Good OO says a class should have a single responsibility, however adding on extra *cross-cutting* requirements means a class that is taking on other responsibilites. For example you might have a **StoreClient** that supposed to be all about making purchases from an online store. Add in some cross-cutting requirements and it might also have to take on the roles of logging, security and recommendations. This is not great: 
+Good OOP says a class should have a single responsibility, however adding on extra *cross-cutting* requirements means a class that is taking on other responsibilites. For example you might have a **StoreClient** that is supposed to be all about making purchases from an online store. Add in some cross-cutting requirements and it might also have to take on the roles of logging, security and recommendations. This is not great because: 
 
 * Our StoreClient is now harder to understand and maintain.
-* These cross-cutting requirements are duplicated and spreading throughout our app. 
+* These cross-cutting requirements are duplicated and spread throughout our app. 
 
 AOP lets us modularize these cross-cutting requirements, and then cleanly identify all of the places they should be applied. As shown in the examples above cross-cutting requirements can be eithe technical or business focused in nature.  
 
@@ -103,7 +102,7 @@ It can be really useful for debugging. Here I was curious when exactly the tap g
 ```
 
 -------------------
-Another convenient use case is adding handlers for classes that you don't own. I've written it for use in [PSPDFKit](http://pspdfkit.com), where we require notifications when a view controller is being dismissed modally. This includes UIKit view controllers like `MFMailComposeViewController` or `UIImagePickerController`. We could have created subclasses for each of these controllers, but this would be quite a lot of unnecessary code. Aspects gives you a simpler solution for this problem:
+Another convenient use case is adding handlers for classes that you don't own. I've written it for use in [PSPDFKit](http://pspdfkit.com), where we require notifications when a view controller is being dismissed modally. This includes UIKit view controllers like `MFMailComposeViewController` and `UIImagePickerController`. We could have created subclasses for each of these controllers, but this would be quite a lot of unnecessary code. Aspects gives you a simpler solution for this problem:
 
 ``` objc
 @implementation UIViewController (DismissActionHook)
@@ -152,7 +151,7 @@ Installation
 ------------
 The simplest option is to use `pod "Aspects"`.
 
-You can also add the two files `Aspects.h/m`. There are no further requirements.
+You can also add the two files `Aspects.h/m` to your project. There are no further requirements.
 
 Compatibility and Limitations
 -----------------------------
@@ -161,8 +160,7 @@ Aspects uses quite some runtime trickery to achieve what it does. You can mostly
 An important limitation is that for class-based hooking, a method can only be hooked once within the subclass hierarchy. [See #2](https://github.com/steipete/Aspects/issues/2)
 This does not apply for objects that are hooked. Aspects creates a dynamic subclass here and has full control.
 
-KVO works if observers are created after your calls `aspect_hookSelector:` It most likely will crash the other way around.
-Still looking for workarounds here - any help apprechiated.
+KVO works if observers are created after your calls `aspect_hookSelector:` It most likely will crash the other way around. Still looking for workarounds here - any help appreciated.
 
 Because of ugly implementation details on the ObjC runtime, methods that return unions that also contain structs might not work correctly unless this code runs on the arm64 runtime.
 
