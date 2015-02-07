@@ -58,7 +58,7 @@ Good OO says a class should have a single responsibility, however adding on extr
 * Our StoreClient is now harder to understand and maintain.
 * These cross-cutting requirements are duplicated and spreading throughout our app. 
 
-AOP lets us modularize these cross-cutting requirements, and then cleanly identify all of the places they should be applied. As shown in the examples above cross-cutting requirements can be eithe technical or business focused in nature.  
+AOP lets us modularize these cross-cutting requirements, and then cleanly identify all of the places they should be applied. As shown in the examples above cross-cutting requirements can be either technical or business focused in nature.  
 
 ## Here are some concrete examples: 
 
