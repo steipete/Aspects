@@ -332,6 +332,8 @@ static void aspect_cleanupHookedClassAndSelector(NSObject *self, SEL selector) {
             // Class is most likely swizzled in place. Undo that.
             if (isMetaClass) {
                 aspect_undoSwizzleClassInPlace((Class)self);
+            }else if (self.class != klass) {
+            	aspect_undoSwizzleClassInPlace(klass);
             }
         }
     }
