@@ -629,6 +629,9 @@
 - (void)foo {
     NSLog(@"%s", __PRETTY_FUNCTION__);
 }
+- (void)bar {
+    NSLog(@"%s", __PRETTY_FUNCTION__);
+}
 @end
 
 @interface B : A @end
@@ -637,6 +640,20 @@
 - (void)foo {
     NSLog(@"%s", __PRETTY_FUNCTION__);
     [super foo];
+}
+- (void)bar {
+    NSLog(@"%s", __PRETTY_FUNCTION__);
+    [super bar];
+}
+@end
+
+@interface C : NSObject
+- (void)foo;
+@end
+
+@implementation C
+- (void)foo {
+    NSLog(@"%s", __PRETTY_FUNCTION__);
 }
 @end
 
@@ -666,6 +683,8 @@
 - (void)testSelectorMangling2 {
     __block BOOL A_aspect_called = NO;
     __block BOOL B_aspect_called = NO;
+    __block BOOL C_aspect_called = NO;
+
     id aspectToken1 = [A aspect_hookSelector:@selector(foo) withOptions:AspectPositionBefore usingBlock:^(id<AspectInfo> info) {
         NSLog(@"before -[A foo]");
         A_aspect_called = YES;
@@ -678,13 +697,51 @@
     } error:NULL];
     XCTAssertNil(aspectToken2, @"Must not return a token");
 
+    // a sibling and it's subclasses should be able to hook the same selector
+    id aspectToken3 = [C aspect_hookSelector:@selector(foo) withOptions:AspectPositionBefore usingBlock:^(id<AspectInfo> info) {
+        NSLog(@"before -[C foo]");
+        C_aspect_called = YES;
+    } error:NULL];
+    XCTAssertNotNil(aspectToken3, @"Must return a token");
+
     B *b = [B new];
     [b foo];
 
     // TODO: A is not yet called, we can't detect the target IMP for an invocation.
     XCTAssertTrue(A_aspect_called, @"A aspect should be called");
     XCTAssertFalse(B_aspect_called, @"B aspect should not be called");
-    
+    XCTAssertFalse(C_aspect_called, @"C aspect should not be called");
+
+    C *c = [C new];
+    [c foo];
+    XCTAssertTrue(C_aspect_called, @"C aspect should be called");
+
+    XCTAssertTrue([aspectToken1 remove], @"Must be able to deregister");
+    XCTAssertTrue([aspectToken3 remove], @"Must be able to deregister");
+}
+- (void)testSelectorMangling3 {
+    __block BOOL A_aspect_called = NO;
+    __block BOOL B_aspect_called = NO;
+
+    id aspectToken1 = [B aspect_hookSelector:@selector(bar) withOptions:AspectPositionBefore usingBlock:^(id<AspectInfo> info) {
+        NSLog(@"before -[B bar]");
+        B_aspect_called = YES;
+    } error:NULL];
+    XCTAssertNotNil(aspectToken1, @"Must return a token");
+
+    // if a subclass already hooks this selector we shouldn't be able to hook it in a superclass
+    id aspectToken2 = [A aspect_hookSelector:@selector(bar) withOptions:AspectPositionBefore usingBlock:^(id<AspectInfo> info) {
+        NSLog(@"before -[A bar]");
+        A_aspect_called = YES;
+    } error:NULL];
+    XCTAssertNil(aspectToken2, @"Must not return a token");
+
+    B *b = [B new];
+    [b bar];
+
+    XCTAssertFalse(A_aspect_called, @"A aspect should not be called");
+    XCTAssertTrue(B_aspect_called, @"B aspect should be called");
+
     XCTAssertTrue([aspectToken1 remove], @"Must be able to deregister");
 }
 
