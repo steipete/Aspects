@@ -66,10 +66,15 @@ typedef struct _AspectBlock {
 @end
 
 @interface AspectTracker : NSObject
-- (id)initWithTrackedClass:(Class)trackedClass parent:(AspectTracker *)parent;
+- (id)initWithTrackedClass:(Class)trackedClass;
 @property (nonatomic, strong) Class trackedClass;
+@property (nonatomic, readonly) NSString *trackedClassName;
 @property (nonatomic, strong) NSMutableSet *selectorNames;
-@property (nonatomic, weak) AspectTracker *parentEntry;
+@property (nonatomic, strong) NSMutableDictionary *selectorNamesToSubclassTrackers;
+- (void)addSubclassTracker:(AspectTracker *)subclassTracker hookingSelectorName:(NSString *)selectorName;
+- (void)removeSubclassTracker:(AspectTracker *)subclassTracker hookingSelectorName:(NSString *)selectorName;
+- (BOOL)subclassHasHookedSelectorName:(NSString *)selectorName;
+- (NSSet *)subclassTrackersHookingSelectorName:(NSString *)selectorName;
 @end
 
 @interface NSInvocation (Aspects)
@@ -594,40 +599,50 @@ static BOOL aspect_isSelectorAllowedAndTrack(NSObject *self, SEL selector, Aspec
         Class klass = [self class];
         NSMutableDictionary *swizzledClassesDict = aspect_getSwizzledClassesDict();
         Class currentClass = [self class];
-        do {
-            AspectTracker *tracker = swizzledClassesDict[currentClass];
-            if ([tracker.selectorNames containsObject:selectorName]) {
 
-                // Find the topmost class for the log.
-                if (tracker.parentEntry) {
-                    AspectTracker *topmostEntry = tracker.parentEntry;
-                    while (topmostEntry.parentEntry) {
-                        topmostEntry = topmostEntry.parentEntry;
-                    }
-                    NSString *errorDescription = [NSString stringWithFormat:@"Error: %@ already hooked in %@. A method can only be hooked once per class hierarchy.", selectorName, NSStringFromClass(topmostEntry.trackedClass)];
-                    AspectError(AspectErrorSelectorAlreadyHookedInClassHierarchy, errorDescription);
-                    return NO;
-                }else if (klass == currentClass) {
+        AspectTracker *tracker = swizzledClassesDict[currentClass];
+        if ([tracker subclassHasHookedSelectorName:selectorName]) {
+            NSSet *subclassTracker = [tracker subclassTrackersHookingSelectorName:selectorName];
+            NSSet *subclassNames = [subclassTracker valueForKey:@"trackedClassName"];
+            NSString *errorDescription = [NSString stringWithFormat:@"Error: %@ already hooked subclasses: %@. A method can only be hooked once per class hierarchy.", selectorName, subclassNames];
+            AspectError(AspectErrorSelectorAlreadyHookedInClassHierarchy, errorDescription);
+            return NO;
+        }
+
+        do {
+            tracker = swizzledClassesDict[currentClass];
+            if ([tracker.selectorNames containsObject:selectorName]) {
+                if (klass == currentClass) {
                     // Already modified and topmost!
                     return YES;
                 }
+                NSString *errorDescription = [NSString stringWithFormat:@"Error: %@ already hooked in %@. A method can only be hooked once per class hierarchy.", selectorName, NSStringFromClass(currentClass)];
+                AspectError(AspectErrorSelectorAlreadyHookedInClassHierarchy, errorDescription);
+                return NO;
             }
-        }while ((currentClass = class_getSuperclass(currentClass)));
+        } while ((currentClass = class_getSuperclass(currentClass)));
 
         // Add the selector as being modified.
         currentClass = klass;
-        AspectTracker *parentTracker = nil;
+        AspectTracker *subclassTracker = nil;
         do {
-            AspectTracker *tracker = swizzledClassesDict[currentClass];
+            tracker = swizzledClassesDict[currentClass];
             if (!tracker) {
-                tracker = [[AspectTracker alloc] initWithTrackedClass:currentClass parent:parentTracker];
+                tracker = [[AspectTracker alloc] initWithTrackedClass:currentClass];
                 swizzledClassesDict[(id<NSCopying>)currentClass] = tracker;
             }
-            [tracker.selectorNames addObject:selectorName];
+            if (subclassTracker) {
+                [tracker addSubclassTracker:subclassTracker hookingSelectorName:selectorName];
+            } else {
+                [tracker.selectorNames addObject:selectorName];
+            }
+
             // All superclasses get marked as having a subclass that is modified.
-            parentTracker = tracker;
+            subclassTracker = tracker;
         }while ((currentClass = class_getSuperclass(currentClass)));
-    }
+	} else {
+		return YES;
+	}
 
     return YES;
 }
@@ -638,14 +653,18 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
     NSMutableDictionary *swizzledClassesDict = aspect_getSwizzledClassesDict();
     NSString *selectorName = NSStringFromSelector(selector);
     Class currentClass = [self class];
+    AspectTracker *subclassTracker = nil;
     do {
         AspectTracker *tracker = swizzledClassesDict[currentClass];
-        if (tracker) {
+        if (subclassTracker) {
+            [tracker removeSubclassTracker:subclassTracker hookingSelectorName:selectorName];
+        } else {
             [tracker.selectorNames removeObject:selectorName];
-            if (tracker.selectorNames.count == 0) {
-                [swizzledClassesDict removeObjectForKey:tracker];
-            }
         }
+        if (tracker.selectorNames.count == 0 && tracker.selectorNamesToSubclassTrackers) {
+            [swizzledClassesDict removeObjectForKey:currentClass];
+        }
+        subclassTracker = tracker;
     }while ((currentClass = class_getSuperclass(currentClass)));
 }
 
@@ -653,16 +672,50 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
 
 @implementation AspectTracker
 
-- (id)initWithTrackedClass:(Class)trackedClass parent:(AspectTracker *)parent {
+- (id)initWithTrackedClass:(Class)trackedClass {
     if (self = [super init]) {
         _trackedClass = trackedClass;
-        _parentEntry = parent;
         _selectorNames = [NSMutableSet new];
+        _selectorNamesToSubclassTrackers = [NSMutableDictionary new];
     }
     return self;
 }
+
+- (BOOL)subclassHasHookedSelectorName:(NSString *)selectorName {
+    return self.selectorNamesToSubclassTrackers[selectorName] != nil;
+}
+
+- (void)addSubclassTracker:(AspectTracker *)subclassTracker hookingSelectorName:(NSString *)selectorName {
+    NSMutableSet *trackerSet = self.selectorNamesToSubclassTrackers[selectorName];
+    if (!trackerSet) {
+        trackerSet = [NSMutableSet new];
+        self.selectorNamesToSubclassTrackers[selectorName] = trackerSet;
+    }
+    [trackerSet addObject:subclassTracker];
+}
+- (void)removeSubclassTracker:(AspectTracker *)subclassTracker hookingSelectorName:(NSString *)selectorName {
+    NSMutableSet *trackerSet = self.selectorNamesToSubclassTrackers[selectorName];
+    [trackerSet removeObject:subclassTracker];
+    if (trackerSet.count == 0) {
+        [self.selectorNamesToSubclassTrackers removeObjectForKey:selectorName];
+    }
+}
+- (NSSet *)subclassTrackersHookingSelectorName:(NSString *)selectorName {
+    NSMutableSet *hookingSubclassTrackers = [NSMutableSet new];
+    for (AspectTracker *tracker in self.selectorNamesToSubclassTrackers[selectorName]) {
+        if ([tracker.selectorNames containsObject:selectorName]) {
+            [hookingSubclassTrackers addObject:tracker];
+        }
+        [hookingSubclassTrackers unionSet:[tracker subclassTrackersHookingSelectorName:selectorName]];
+    }
+    return hookingSubclassTrackers;
+}
+- (NSString *)trackedClassName {
+    return NSStringFromClass(self.trackedClass);
+}
+
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %@, trackedClass: %@, selectorNames:%@, parent:%p>", self.class, self, NSStringFromClass(self.trackedClass), self.selectorNames, self.parentEntry];
+    return [NSString stringWithFormat:@"<%@: %@, trackedClass: %@, selectorNames:%@, subclass selector names: %@>", self.class, self, NSStringFromClass(self.trackedClass), self.selectorNames, self.selectorNamesToSubclassTrackers.allKeys];
 }
 
 @end
