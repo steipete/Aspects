@@ -1,4 +1,4 @@
-Aspects v1.4.1 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects) [![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
+Aspects v1.4.2 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects) [![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
 ==============
 
 Delightful, simple library for aspect oriented programming by [@steipete](http://twitter.com/steipete).
@@ -175,7 +175,7 @@ Supported iOS & SDK Versions
 -----------------------------
 
 * Aspects requires ARC.
-* Aspects is tested with iOS 6+ and OS X 10.7 or higher.
+* Aspects is tested with iOS 7+ and OS X 10.7 or higher.
 
 License
 -------
@@ -184,6 +184,11 @@ MIT licensed, Copyright (c) 2014 Peter Steinberger, steipete@gmail.com, [@steipe
 
 Release Notes
 -----------------
+
+Version 1.4.2
+
+- Allow to hook different subclasses.
+- Smaller tweaks.
 
 Version 1.4.1
 
