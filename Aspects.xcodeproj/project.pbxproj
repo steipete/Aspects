@@ -22,7 +22,6 @@
 		34B986841B1DE2BE00DE719D /* Aspects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Aspects.m; sourceTree = "<group>"; };
 		34B9868C1B1E48CD00DE719D /* Aspects.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Aspects.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7376F8C31B8EA670009CAB74 /* Aspects.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Aspects.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		7376F8C51B8EA670009CAB74 /* Aspects-watchOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Aspects-watchOS.h"; sourceTree = "<group>"; };
 		7376F8C71B8EA670009CAB74 /* Info-watch.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-watch.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -55,7 +54,6 @@
 			isa = PBXGroup;
 			children = (
 				34B986691B1DE0CE00DE719D /* Aspects */,
-				7376F8C41B8EA670009CAB74 /* Aspects-watchOS */,
 				34B986681B1DE0CE00DE719D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -87,14 +85,6 @@
 				7376F8C71B8EA670009CAB74 /* Info-watch.plist */,
 			);
 			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
-		7376F8C41B8EA670009CAB74 /* Aspects-watchOS */ = {
-			isa = PBXGroup;
-			children = (
-				7376F8C51B8EA670009CAB74 /* Aspects-watchOS.h */,
-			);
-			path = "Aspects-watchOS";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
