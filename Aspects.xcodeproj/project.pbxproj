@@ -12,6 +12,7 @@
 		34B986A51B1E491000DE719D /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 34B986841B1DE2BE00DE719D /* Aspects.m */; };
 		34B986A61B1E491300DE719D /* Aspects.h in Headers */ = {isa = PBXBuildFile; fileRef = 34B9866C1B1DE0CE00DE719D /* Aspects.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7376F8CD1B8EA767009CAB74 /* Aspects.h in Headers */ = {isa = PBXBuildFile; fileRef = 34B9866C1B1DE0CE00DE719D /* Aspects.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		7376F8D61B8EB1FA009CAB74 /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 34B986841B1DE2BE00DE719D /* Aspects.m */; settings = {ASSET_TAGS = (); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -264,6 +265,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7376F8D61B8EB1FA009CAB74 /* Aspects.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
