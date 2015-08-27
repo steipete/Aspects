@@ -11,7 +11,7 @@
 		34B986861B1DE2E300DE719D /* Aspects.h in Headers */ = {isa = PBXBuildFile; fileRef = 34B9866C1B1DE0CE00DE719D /* Aspects.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		34B986A51B1E491000DE719D /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 34B986841B1DE2BE00DE719D /* Aspects.m */; };
 		34B986A61B1E491300DE719D /* Aspects.h in Headers */ = {isa = PBXBuildFile; fileRef = 34B9866C1B1DE0CE00DE719D /* Aspects.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		7376F8C61B8EA670009CAB74 /* Aspects-watchOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 7376F8C51B8EA670009CAB74 /* Aspects-watchOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		7376F8CD1B8EA767009CAB74 /* Aspects.h in Headers */ = {isa = PBXBuildFile; fileRef = 34B9866C1B1DE0CE00DE719D /* Aspects.h */; settings = {ASSET_TAGS = (); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,7 +22,7 @@
 		34B9868C1B1E48CD00DE719D /* Aspects.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Aspects.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7376F8C31B8EA670009CAB74 /* Aspects.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Aspects.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7376F8C51B8EA670009CAB74 /* Aspects-watchOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Aspects-watchOS.h"; sourceTree = "<group>"; };
-		7376F8C71B8EA670009CAB74 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7376F8C71B8EA670009CAB74 /* Info-watch.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-watch.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -83,6 +83,7 @@
 			isa = PBXGroup;
 			children = (
 				34B9866B1B1DE0CE00DE719D /* Info.plist */,
+				7376F8C71B8EA670009CAB74 /* Info-watch.plist */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -91,7 +92,6 @@
 			isa = PBXGroup;
 			children = (
 				7376F8C51B8EA670009CAB74 /* Aspects-watchOS.h */,
-				7376F8C71B8EA670009CAB74 /* Info.plist */,
 			);
 			path = "Aspects-watchOS";
 			sourceTree = "<group>";
@@ -119,7 +119,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7376F8C61B8EA670009CAB74 /* Aspects-watchOS.h in Headers */,
+				7376F8CD1B8EA767009CAB74 /* Aspects.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -440,7 +440,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_TESTABILITY = YES;
-				INFOPLIST_FILE = "Aspects-watchOS/Info.plist";
+				INFOPLIST_FILE = "Info-watch.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.pspdfkit.Aspects-watchOS";
@@ -459,7 +459,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = "Aspects-watchOS/Info.plist";
+				INFOPLIST_FILE = "Info-watch.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.pspdfkit.Aspects-watchOS";
@@ -508,6 +508,7 @@
 				7376F8C91B8EA670009CAB74 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
