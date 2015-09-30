@@ -44,22 +44,22 @@ Aspects calls and matches block arguments. Blocks without arguments are supporte
 
 When to use Aspects
 -------------------
-Aspect-oriented programming (AOP) is used to encapsulate "cross-cutting" concerns. These are the kind of requirements that *cut-accross* many modules in your system, and so cannot be encapsulated using normal object oriented programming. Some examples of these kinds of requirements: 
+Aspect-oriented programming (AOP) is used to encapsulate "cross-cutting" concerns. These are the kind of requirements that *cut-accross* many modules in your system, and so cannot be encapsulated using normal object oriented programming. Some examples of these kinds of requirements:
 
-* *Whenever* a user invokes a method on the service client, security should be checked. 
-* *Whenever* a user interacts with the store, a genius suggestion should be presented, based on their interaction. 
-* *All* calls should be logged. 
+* *Whenever* a user invokes a method on the service client, security should be checked.
+* *Whenever* a user interacts with the store, a genius suggestion should be presented, based on their interaction.
+* *All* calls should be logged.
 
-If we implemented the above requirements using regular OOP there'd be some drawbacks: 
+If we implemented the above requirements using regular OOP there'd be some drawbacks:
 
-Good OOP says a class should have a single responsibility, however adding on extra *cross-cutting* requirements means a class that is taking on other responsibilites. For example you might have a **StoreClient** that is supposed to be all about making purchases from an online store. Add in some cross-cutting requirements and it might also have to take on the roles of logging, security and recommendations. This is not great because: 
+Good OOP says a class should have a single responsibility, however adding on extra *cross-cutting* requirements means a class that is taking on other responsibilites. For example you might have a **StoreClient** that is supposed to be all about making purchases from an online store. Add in some cross-cutting requirements and it might also have to take on the roles of logging, security and recommendations. This is not great because:
 
 * Our StoreClient is now harder to understand and maintain.
-* These cross-cutting requirements are duplicated and spread throughout our app. 
+* These cross-cutting requirements are duplicated and spread throughout our app.
 
 AOP lets us modularize these cross-cutting requirements, and then cleanly identify all of the places they should be applied. As shown in the examples above cross-cutting requirements can be either technical or business focused in nature.  
 
-## Here are some concrete examples: 
+## Here are some concrete examples:
 
 
 Aspects can be used to **dynamically add logging** for debug builds only:
@@ -182,6 +182,10 @@ MIT licensed, Copyright (c) 2014 Peter Steinberger, steipete@gmail.com, [@steipe
 
 Release Notes
 -----------------
+
+Version 1.4.3
+
+- Support watchOS 2.0
 
 Version 1.4.2
 
