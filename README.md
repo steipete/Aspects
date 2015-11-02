@@ -44,7 +44,7 @@ Aspects calls and matches block arguments. Blocks without arguments are supporte
 
 When to use Aspects
 -------------------
-Aspect-oriented programming (AOP) is used to encapsulate "cross-cutting" concerns. These are the kind of requirements that *cut-accross* many modules in your system, and so cannot be encapsulated using normal object oriented programming. Some examples of these kinds of requirements: 
+Aspect-oriented programming (AOP) is used to encapsulate "cross-cutting" concerns. These are the kind of requirements that *cut-across* many modules in your system, and so cannot be encapsulated using normal object oriented programming. Some examples of these kinds of requirements: 
 
 * *Whenever* a user invokes a method on the service client, security should be checked. 
 * *Whenever* a user interacts with the store, a genius suggestion should be presented, based on their interaction. 
