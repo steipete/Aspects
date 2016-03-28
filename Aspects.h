@@ -8,11 +8,11 @@
 #import <Foundation/Foundation.h>
 
 typedef NS_OPTIONS(NSUInteger, AspectOptions) {
-    AspectPositionAfter   = 0,            /// Called after the original implementation (default)
-    AspectPositionInstead = 1,            /// Will replace the original implementation.
-    AspectPositionBefore  = 2,            /// Called before the original implementation.
+    AspectPositionAfter   = 1 << 0,             /// Called after the original implementation (default)
+    AspectPositionInstead = 1 << 1,             /// Will replace the original implementation.
+    AspectPositionBefore  = 1 << 2,             /// Called before the original implementation.
     
-    AspectOptionAutomaticRemoval = 1 << 3 /// Will remove the hook after the first execution.
+    AspectOptionAutomaticRemoval = 1 << 3       /// Will remove the hook after the first execution.
 };
 
 /// Opaque Aspect Token that allows to deregister the hook.
@@ -71,6 +71,7 @@ typedef NS_OPTIONS(NSUInteger, AspectOptions) {
 typedef NS_ENUM(NSUInteger, AspectErrorCode) {
     AspectErrorSelectorBlacklisted,                   /// Selectors like release, retain, autorelease are blacklisted.
     AspectErrorDoesNotRespondToSelector,              /// Selector could not be found.
+    AspectErrorOptionsValue,                          /// Options value should less than 0xc(AspectPositionBefore | AspectOptionAutomaticRemoval).
     AspectErrorSelectorDeallocPosition,               /// When hooking dealloc, only AspectPositionBefore is allowed.
     AspectErrorSelectorAlreadyHookedInClassHierarchy, /// Statically hooking the same method in subclasses is not allowed.
     AspectErrorFailedToAllocateClassPair,             /// The runtime failed creating a class pair.
