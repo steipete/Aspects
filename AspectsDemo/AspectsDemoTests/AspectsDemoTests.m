@@ -307,6 +307,23 @@
     XCTAssertTrue([aspect remove], @"Must be able to deregister");
 }
 
+- (void)testDoubleReturnInstead {
+    TestClass *testClass = [TestClass new];
+    double previousExpectedValue = [testClass callReturnsDouble];
+    double expectedValue = 3.5;
+    
+    id aspect = [testClass aspect_hookSelector:@selector(callReturnsDouble) withOptions:AspectPositionInstead usingBlock:^(id<AspectInfo> info){
+        double toReturn = 3.5;
+        void *ptr = &toReturn;
+        [info.originalInvocation setReturnValue:ptr];
+    }error:NULL];
+    double actualValue = [testClass callReturnsDouble];
+    
+    XCTAssertNotEqual(previousExpectedValue, actualValue, @"Must not return what it returned before we called our Instead");
+    XCTAssertEqual(expectedValue, actualValue, @"Must be equal");
+    XCTAssertTrue([aspect remove], @"Must be able to deregister");
+}
+
 - (void)testLongLongReturn {
     TestClass *testClass = [TestClass new];
     long long d1 = [testClass callReturnsLongLong];
