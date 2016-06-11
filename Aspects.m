@@ -312,7 +312,7 @@ static void aspect_cleanupHookedClassAndSelector(NSObject *self, SEL selector) {
     // Deregister global tracked selector
     aspect_deregisterTrackedSelector(self, selector);
     // Get the aspect container and check if there are any hooks remaining. Clean up if there are not.
-    AspectsContainer *container = aspect_getContainerForObject(self, selector);
+    AspectsContainer *container = aspect_getContainerForObjectWithoutCreate(self, selector);
     if (!container.hasAspects) {
         // Destroy the container
         aspect_destroyContainerForObject(self, selector);
@@ -497,7 +497,7 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
     SEL originalSelector = invocation.selector;
 	SEL aliasSelector = aspect_aliasForSelector(invocation.selector);
     invocation.selector = aliasSelector;
-    AspectsContainer *objectContainer = aspect_getContainerForObject(self, aliasSelector);
+    AspectsContainer *objectContainer = aspect_getContainerForObjectWithoutCreate(self, aliasSelector);
     AspectsContainer *classContainer = aspect_getContainerForClass(object_getClass(self), aliasSelector);
     AspectInfo *info = [[AspectInfo alloc] initWithInstance:self invocation:invocation];
     NSArray *aspectsToRemove = nil;
@@ -569,11 +569,22 @@ static AspectsContainer *aspect_getContainerForObject(NSObject *self, SEL select
     return aspectContainer;
 }
 
+static AspectsContainer *aspect_getContainerForObjectWithoutCreate(NSObject *self, SEL selector) {
+    NSCParameterAssert(self);
+    SEL aliasSelector = selector;
+    if (![NSStringFromSelector(selector) hasPrefix:AspectsMessagePrefix]) {
+        aliasSelector = aspect_aliasForSelector(selector);
+    }
+    NSString *selectorName = NSStringFromSelector(aliasSelector);
+    AspectsContainer *aspectContainer = aspect_getAliasSelectorName2ContainerDictionaryForObject(self)[selectorName];
+    return aspectContainer;
+}
+
 static AspectsContainer *aspect_getContainerForClass(Class klass, SEL selector) {
     NSCParameterAssert(klass);
     AspectsContainer *classContainer = nil;
     do {
-        AspectsContainer *container = aspect_getContainerForObject((NSObject *)klass, selector);
+        AspectsContainer *container = aspect_getContainerForObjectWithoutCreate((id)klass, selector);
         if (container.hasAspects) {
             classContainer = container;
             break;
