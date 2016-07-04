@@ -774,7 +774,9 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
 	} else if (strcmp(argType, @encode(bool)) == 0) {
 		WRAP_AND_RETURN(BOOL);
 	} else if (strcmp(argType, @encode(char *)) == 0) {
-		WRAP_AND_RETURN(const char *);
+        char * val = 0;
+        [self getArgument:&val atIndex:(NSInteger)index];
+        return val ? @(val) : nil;
 	} else if (strcmp(argType, @encode(void (^)(void))) == 0) {
 		__unsafe_unretained id block = nil;
 		[self getArgument:&block atIndex:(NSInteger)index];
