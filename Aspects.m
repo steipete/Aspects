@@ -383,6 +383,7 @@ static Class aspect_hookClass(NSObject *self, NSError **error) {
 		objc_registerClassPair(subclass);
 	}
 
+    //change isa ptr
 	object_setClass(self, subclass);
 	return subclass;
 }
