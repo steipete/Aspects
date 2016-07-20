@@ -369,19 +369,30 @@ static Class aspect_hookClass(NSObject *self, NSError **error) {
 	const char *subclassName = [className stringByAppendingString:AspectsSubclassSuffix].UTF8String;
 	Class subclass = objc_getClass(subclassName);
 
-	if (subclass == nil) {
-		subclass = objc_allocateClassPair(baseClass, subclassName, 0);
-		if (subclass == nil) {
+    if (subclass == nil) {
+        subclass = objc_allocateClassPair(baseClass, subclassName, 0);
+        if (subclass == nil) {
             NSString *errrorDesc = [NSString stringWithFormat:@"objc_allocateClassPair failed to allocate class %s.", subclassName];
             AspectError(AspectErrorFailedToAllocateClassPair, errrorDesc);
             return nil;
         }
-
-		aspect_swizzleForwardInvocation(subclass);
-		aspect_hookedGetClass(subclass, statedClass);
-		aspect_hookedGetClass(object_getClass(subclass), statedClass);
-		objc_registerClassPair(subclass);
-	}
+        
+        IMP originalImplementation = class_replaceMethod(subclass, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, "v@:@");
+        if (originalImplementation) {
+            class_addMethod(subclass, NSSelectorFromString(AspectsForwardInvocationSelectorName), originalImplementation, "v@:@");
+        } else {
+            Method baseTargetMethod = class_getInstanceMethod(baseClass, @selector(forwardInvocation:));
+            IMP baseTargetMethodIMP = method_getImplementation(baseTargetMethod);
+            if (baseTargetMethodIMP) {
+                class_addMethod(subclass, NSSelectorFromString(AspectsForwardInvocationSelectorName), baseTargetMethodIMP, "v@:@");
+                
+            }
+        }
+        //aspect_swizzleForwardInvocation(subclass);
+        aspect_hookedGetClass(subclass, statedClass);
+        aspect_hookedGetClass(object_getClass(subclass), statedClass);
+        objc_registerClassPair(subclass);
+    }
 
 	object_setClass(self, subclass);
 	return subclass;
@@ -501,9 +512,7 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
         }while (!respondsToAlias && (klass = class_getSuperclass(klass)));
     }
 
-    // After hooks.
-    aspect_invoke(classContainer.afterAspects, info);
-    aspect_invoke(objectContainer.afterAspects, info);
+    
 
     // If no hooks are installed, call original implementation (usually to throw an exception)
     if (!respondsToAlias) {
@@ -515,6 +524,10 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
             [self doesNotRecognizeSelector:invocation.selector];
         }
     }
+    
+    // After hooks.
+    aspect_invoke(classContainer.afterAspects, info);
+    aspect_invoke(objectContainer.afterAspects, info);
 
     // Remove any hooks that are queued for deregistration.
     [aspectsToRemove makeObjectsPerformSelector:@selector(remove)];
