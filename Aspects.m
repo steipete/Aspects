@@ -515,14 +515,11 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
     
 
     // If no hooks are installed, call original implementation (usually to throw an exception)
+    // If no hooks are installed, call original implementation (usually to throw an exception)
     if (!respondsToAlias) {
         invocation.selector = originalSelector;
         SEL originalForwardInvocationSEL = NSSelectorFromString(AspectsForwardInvocationSelectorName);
-        if ([self respondsToSelector:originalForwardInvocationSEL]) {
-            ((void( *)(id, SEL, NSInvocation *))objc_msgSend)(self, originalForwardInvocationSEL, invocation);
-        }else {
-            [self doesNotRecognizeSelector:invocation.selector];
-        }
+        ((void( *)(id, SEL, NSInvocation *))objc_msgSend)(self, originalForwardInvocationSEL, invocation);
     }
     
     // After hooks.
