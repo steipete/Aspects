@@ -376,13 +376,14 @@ static Class aspect_hookClass(NSObject *self, NSError **error) {
             AspectError(AspectErrorFailedToAllocateClassPair, errrorDesc);
             return nil;
         }
-
+        
 		aspect_swizzleForwardInvocation(subclass);
 		aspect_hookedGetClass(subclass, statedClass);
 		aspect_hookedGetClass(object_getClass(subclass), statedClass);
 		objc_registerClassPair(subclass);
 	}
 
+    //change isa ptr
 	object_setClass(self, subclass);
 	return subclass;
 }
