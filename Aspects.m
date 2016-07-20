@@ -301,16 +301,19 @@ static void aspect_cleanupHookedClassAndSelector(NSObject *self, SEL selector) {
     // Check if the method is marked as forwarded and undo that.
     Method targetMethod = class_getInstanceMethod(klass, selector);
     IMP targetMethodIMP = method_getImplementation(targetMethod);
-    if (aspect_isMsgForwardIMP(targetMethodIMP)) {
+    if (aspect_isMsgForwardIMP(targetMethodIMP) && isMetaClass) {
         // Restore the original method implementation.
         const char *typeEncoding = method_getTypeEncoding(targetMethod);
         SEL aliasSelector = aspect_aliasForSelector(selector);
         Method originalMethod = class_getInstanceMethod(klass, aliasSelector);
         IMP originalIMP = method_getImplementation(originalMethod);
-        NSCAssert(originalMethod, @"Original implementation for %@ not found %@ on %@", NSStringFromSelector(selector), NSStringFromSelector(aliasSelector), klass);
-
-        class_replaceMethod(klass, selector, originalIMP, typeEncoding);
-        AspectLog(@"Aspects: Removed hook for -[%@ %@].", klass, NSStringFromSelector(selector));
+        if (originalIMP) {
+            NSCAssert(originalMethod, @"Original implementation for %@ not found %@ on %@", NSStringFromSelector(selector), NSStringFromSelector(aliasSelector), klass);
+            class_replaceMethod(klass, selector, originalIMP, typeEncoding);
+            AspectLog(@"Aspects: Removed hook for -[%@ %@].", klass, NSStringFromSelector(selector));
+        } else {
+            AspectLog(@"Aspects: Removed hook for -[%@ %@]. but no hook", klass, NSStringFromSelector(selector));
+        }
     }
 
     // Deregister global tracked selector
