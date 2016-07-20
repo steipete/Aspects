@@ -377,18 +377,7 @@ static Class aspect_hookClass(NSObject *self, NSError **error) {
             return nil;
         }
         
-        IMP originalImplementation = class_replaceMethod(subclass, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, "v@:@");
-        if (originalImplementation) {
-            class_addMethod(subclass, NSSelectorFromString(AspectsForwardInvocationSelectorName), originalImplementation, "v@:@");
-        } else {
-            Method baseTargetMethod = class_getInstanceMethod(baseClass, @selector(forwardInvocation:));
-            IMP baseTargetMethodIMP = method_getImplementation(baseTargetMethod);
-            if (baseTargetMethodIMP) {
-                class_addMethod(subclass, NSSelectorFromString(AspectsForwardInvocationSelectorName), baseTargetMethodIMP, "v@:@");
-                
-            }
-        }
-        //aspect_swizzleForwardInvocation(subclass);
+        aspect_swizzleForwardInvocation(subclass);
         aspect_hookedGetClass(subclass, statedClass);
         aspect_hookedGetClass(object_getClass(subclass), statedClass);
         objc_registerClassPair(subclass);
