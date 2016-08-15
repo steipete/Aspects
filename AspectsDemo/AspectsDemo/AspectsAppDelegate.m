@@ -9,6 +9,7 @@
 #import "AspectsAppDelegate.h"
 #import "AspectsViewController.h"
 #import "Aspects.h"
+#import <objc/runtime.h>
 
 @implementation AspectsAppDelegate
 
@@ -29,7 +30,18 @@
             NSLog(@"Controller is layouting!");
         } error:NULL];
     }
+    
+    [AspectsViewController aspect_hookSelector:@selector(testInstanceMethod) withOptions:AspectPositionAfter usingBlock:^(id info) {
+        NSLog(@"after InstanceMethod");
+    } error:NULL];
+    [aspectsController testInstanceMethod];
 
+    Class Meta = objc_getMetaClass("AspectsViewController");
+    [Meta aspect_hookSelector:@selector(testClassMethod) withOptions:AspectPositionAfter usingBlock:^(id info) {
+        NSLog(@"after ClassMethod");
+    } error:NULL];
+    [AspectsViewController testClassMethod];
+    
     return YES;
 }
 
