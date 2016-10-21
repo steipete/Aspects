@@ -31,4 +31,14 @@
     } error:NULL];
 }
 
+- (void)testInstanceMethod
+{
+    NSLog(@"call InstanceMethod");
+}
+
++ (void)testClassMethod
+{
+    NSLog(@"call ClassMethod");
+}
+
 @end

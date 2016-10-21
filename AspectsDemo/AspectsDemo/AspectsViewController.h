@@ -12,4 +12,7 @@
 
 - (IBAction)buttonPressed:(id)sender;
 
+- (void)testInstanceMethod;
++ (void)testClassMethod;
+
 @end
