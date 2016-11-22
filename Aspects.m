@@ -301,16 +301,19 @@ static void aspect_cleanupHookedClassAndSelector(NSObject *self, SEL selector) {
     // Check if the method is marked as forwarded and undo that.
     Method targetMethod = class_getInstanceMethod(klass, selector);
     IMP targetMethodIMP = method_getImplementation(targetMethod);
-    if (aspect_isMsgForwardIMP(targetMethodIMP)) {
+    if (aspect_isMsgForwardIMP(targetMethodIMP) && isMetaClass) {
         // Restore the original method implementation.
         const char *typeEncoding = method_getTypeEncoding(targetMethod);
         SEL aliasSelector = aspect_aliasForSelector(selector);
         Method originalMethod = class_getInstanceMethod(klass, aliasSelector);
         IMP originalIMP = method_getImplementation(originalMethod);
-        NSCAssert(originalMethod, @"Original implementation for %@ not found %@ on %@", NSStringFromSelector(selector), NSStringFromSelector(aliasSelector), klass);
-
-        class_replaceMethod(klass, selector, originalIMP, typeEncoding);
-        AspectLog(@"Aspects: Removed hook for -[%@ %@].", klass, NSStringFromSelector(selector));
+        if (originalIMP) {
+            NSCAssert(originalMethod, @"Original implementation for %@ not found %@ on %@", NSStringFromSelector(selector), NSStringFromSelector(aliasSelector), klass);
+            class_replaceMethod(klass, selector, originalIMP, typeEncoding);
+            AspectLog(@"Aspects: Removed hook for -[%@ %@].", klass, NSStringFromSelector(selector));
+        } else {
+            AspectLog(@"Aspects: Removed hook for -[%@ %@]. but no hook", klass, NSStringFromSelector(selector));
+        }
     }
 
     // Deregister global tracked selector
@@ -377,7 +380,18 @@ static Class aspect_hookClass(NSObject *self, NSError **error) {
             return nil;
         }
 
-		aspect_swizzleForwardInvocation(subclass);
+        IMP originalImplementation = class_replaceMethod(subclass, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, "v@:@");
+        if (originalImplementation) {
+            class_addMethod(subclass, NSSelectorFromString(AspectsForwardInvocationSelectorName), originalImplementation, "v@:@");
+        } else {
+            Method baseTargetMethod = class_getInstanceMethod(baseClass, @selector(forwardInvocation:));
+            IMP baseTargetMethodIMP = method_getImplementation(baseTargetMethod);
+            if (baseTargetMethodIMP) {
+                class_addMethod(subclass, NSSelectorFromString(AspectsForwardInvocationSelectorName), baseTargetMethodIMP, "v@:@");
+                
+            }
+        }
+		//aspect_swizzleForwardInvocation(subclass);
 		aspect_hookedGetClass(subclass, statedClass);
 		aspect_hookedGetClass(object_getClass(subclass), statedClass);
 		objc_registerClassPair(subclass);
@@ -501,20 +515,16 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
         }while (!respondsToAlias && (klass = class_getSuperclass(klass)));
     }
 
-    // After hooks.
-    aspect_invoke(classContainer.afterAspects, info);
-    aspect_invoke(objectContainer.afterAspects, info);
-
     // If no hooks are installed, call original implementation (usually to throw an exception)
     if (!respondsToAlias) {
         invocation.selector = originalSelector;
         SEL originalForwardInvocationSEL = NSSelectorFromString(AspectsForwardInvocationSelectorName);
-        if ([self respondsToSelector:originalForwardInvocationSEL]) {
-            ((void( *)(id, SEL, NSInvocation *))objc_msgSend)(self, originalForwardInvocationSEL, invocation);
-        }else {
-            [self doesNotRecognizeSelector:invocation.selector];
-        }
+        ((void( *)(id, SEL, NSInvocation *))objc_msgSend)(self, originalForwardInvocationSEL, invocation);
     }
+
+    // After hooks.
+    aspect_invoke(classContainer.afterAspects, info);
+    aspect_invoke(objectContainer.afterAspects, info);
 
     // Remove any hooks that are queued for deregistration.
     [aspectsToRemove makeObjectsPerformSelector:@selector(remove)];
