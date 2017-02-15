@@ -279,6 +279,13 @@ static void aspect_prepareClassAndHookSelector(NSObject *self, SEL selector, NSE
         if (![klass instancesRespondToSelector:aliasSelector]) {
             __unused BOOL addedAlias = class_addMethod(klass, aliasSelector, method_getImplementation(targetMethod), typeEncoding);
             NSCAssert(addedAlias, @"Original implementation for %@ is already copied to %@ on %@", NSStringFromSelector(selector), NSStringFromSelector(aliasSelector), klass);
+        } else {
+            // update exist alias method
+            Method aliasMethod = class_getInstanceMethod(klass, aliasSelector);
+            IMP aliasMethodIMP = method_getImplementation(aliasMethod);
+            if (aliasMethodIMP != targetMethodIMP) {
+                class_replaceMethod(klass, aliasSelector, targetMethodIMP, typeEncoding);
+            }
         }
 
         // We use forwardInvocation to hook in.
@@ -458,6 +465,25 @@ static void aspect_undoSwizzleClassInPlace(Class klass) {
     });
 }
 
+void aspect_invocationAlias(NSInvocation *invocation, SEL originalSelector);
+void aspect_invocationAlias(NSInvocation *invocation, SEL originalSelector)
+{
+    Class klass = object_getClass(invocation.target);
+    SEL aliasSelector = invocation.selector;
+    
+    Method aliasInvocationMethod = class_getInstanceMethod(klass, aliasSelector);
+    IMP aliasInvocation = method_getImplementation(aliasInvocationMethod);
+    
+    const char *typeEncoding = method_getTypeEncoding(aliasInvocationMethod);
+    IMP msgForwardInvocation = class_replaceMethod(klass, originalSelector, aliasInvocation, typeEncoding);
+    
+    invocation.selector = originalSelector;
+    [invocation invoke];
+    
+    class_replaceMethod(klass, originalSelector, msgForwardInvocation, typeEncoding);
+    invocation.selector = aliasSelector;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Aspect Invoke Point
 
@@ -495,7 +521,7 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
         Class klass = object_getClass(invocation.target);
         do {
             if ((respondsToAlias = [klass instancesRespondToSelector:aliasSelector])) {
-                [invocation invoke];
+                aspect_invocationAlias(invocation, originalSelector);
                 break;
             }
         }while (!respondsToAlias && (klass = class_getSuperclass(klass)));
