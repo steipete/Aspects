@@ -160,8 +160,6 @@ Aspects uses quite some runtime trickery to achieve what it does. You can mostly
 An important limitation is that for class-based hooking, a method can only be hooked once within the subclass hierarchy. [See #2](https://github.com/steipete/Aspects/issues/2)
 This does not apply for objects that are hooked. Aspects creates a dynamic subclass here and has full control.
 
-KVO works if observers are created after your calls `aspect_hookSelector:` It most likely will crash the other way around. Still looking for workarounds here - any help appreciated.
-
 Because of ugly implementation details on the ObjC runtime, methods that return unions that also contain structs might not work correctly unless this code runs on the arm64 runtime.
 
 Credits
@@ -182,6 +180,10 @@ MIT licensed, Copyright (c) 2014 Peter Steinberger, steipete@gmail.com, [@steipe
 
 Release Notes
 -----------------
+
+Version 1.4.3
+
+- Works with KVO. Only with one limitation: Aspects works on a pre-registeded KVO'd object until all observers has been removed. More detailed info at `TestCase:testKVOCoexistanceWithPreregisteredKVO` and [PR #115](https://github.com/steipete/Aspects/pull/115)
 
 Version 1.4.2
 
