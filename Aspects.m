@@ -465,23 +465,31 @@ static void aspect_undoSwizzleClassInPlace(Class klass) {
     });
 }
 
-void aspect_invocationAlias(NSInvocation *invocation, SEL originalSelector);
-void aspect_invocationAlias(NSInvocation *invocation, SEL originalSelector)
+static BOOL aspect_invokeAlias(NSInvocation *invocation, SEL originalSelector)
 {
+    BOOL respondsToAlias = YES;
     Class klass = object_getClass(invocation.target);
     SEL aliasSelector = invocation.selector;
     
-    Method aliasInvocationMethod = class_getInstanceMethod(klass, aliasSelector);
-    IMP aliasInvocation = method_getImplementation(aliasInvocationMethod);
+    do {
+        if ((respondsToAlias = [klass instancesRespondToSelector:aliasSelector])) {
+            // invoke alias method
+            Method aliasInvocationMethod = class_getInstanceMethod(klass, aliasSelector);
+            IMP aliasInvocation = method_getImplementation(aliasInvocationMethod);
+            
+            const char *typeEncoding = method_getTypeEncoding(aliasInvocationMethod);
+            IMP msgForwardInvocation = class_replaceMethod(klass, originalSelector, aliasInvocation, typeEncoding);
+            
+            invocation.selector = originalSelector;
+            [invocation invoke];
+            
+            class_replaceMethod(klass, originalSelector, msgForwardInvocation, typeEncoding);
+            invocation.selector = aliasSelector;
+            break;
+        }
+    }while (!respondsToAlias && (klass = class_getSuperclass(klass)));
     
-    const char *typeEncoding = method_getTypeEncoding(aliasInvocationMethod);
-    IMP msgForwardInvocation = class_replaceMethod(klass, originalSelector, aliasInvocation, typeEncoding);
-    
-    invocation.selector = originalSelector;
-    [invocation invoke];
-    
-    class_replaceMethod(klass, originalSelector, msgForwardInvocation, typeEncoding);
-    invocation.selector = aliasSelector;
+    return respondsToAlias;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -518,13 +526,7 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
         aspect_invoke(classContainer.insteadAspects, info);
         aspect_invoke(objectContainer.insteadAspects, info);
     }else {
-        Class klass = object_getClass(invocation.target);
-        do {
-            if ((respondsToAlias = [klass instancesRespondToSelector:aliasSelector])) {
-                aspect_invocationAlias(invocation, originalSelector);
-                break;
-            }
-        }while (!respondsToAlias && (klass = class_getSuperclass(klass)));
+        respondsToAlias = aspect_invokeAlias(invocation, originalSelector);
     }
 
     // After hooks.
