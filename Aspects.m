@@ -243,24 +243,14 @@ static BOOL aspect_isMsgForwardIMP(IMP impl) {
 static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
     IMP msgForwardIMP = _objc_msgForward;
 #if !defined(__arm64__)
-    // As an ugly internal runtime implementation detail in the 32bit runtime, we need to determine of the method we hook returns a struct or anything larger than id.
-    // https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/LowLevelABI/000-Introduction/introduction.html
-    // https://github.com/ReactiveCocoa/ReactiveCocoa/issues/783
-    // http://infocenter.arm.com/help/topic/com.arm.doc.ihi0042e/IHI0042E_aapcs.pdf (Section 5.4)
-    Method method = class_getInstanceMethod(self.class, selector);
-    const char *encoding = method_getTypeEncoding(method);
-    BOOL methodReturnsStructValue = encoding[0] == _C_STRUCT_B;
-    if (methodReturnsStructValue) {
-        @try {
-            NSUInteger valueSize = 0;
-            NSGetSizeAndAlignment(encoding, &valueSize, NULL);
-
-            if (valueSize == 1 || valueSize == 2 || valueSize == 4 || valueSize == 8) {
-                methodReturnsStructValue = NO;
-            }
-        } @catch (__unused NSException *e) {}
+    //https://github.com/bang590/JSPatch/wiki/JSPatch-%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%AF%A6%E8%A7%A3
+    Class klass = object_getClass(self);
+    BOOL isMetaClass = class_isMetaClass(klass);
+    if (isMetaClass) {
+        klass = (Class)self;
     }
-    if (methodReturnsStructValue) {
+    NSMethodSignature *methodSignature = [klass instanceMethodSignatureForSelector:selector];
+    if ([methodSignature.debugDescription rangeOfString:@"is special struct return? YES"].location != NSNotFound) {
         msgForwardIMP = (IMP)_objc_msgForward_stret;
     }
 #endif
