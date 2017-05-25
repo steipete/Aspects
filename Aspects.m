@@ -38,8 +38,8 @@ typedef struct _AspectBlock {
 } *AspectBlockRef;
 
 @interface AspectInfo : NSObject <AspectInfo>
-- (id)initWithInstance:(__unsafe_unretained id)instance invocation:(NSInvocation *)invocation;
-@property (nonatomic, unsafe_unretained, readonly) id instance;
+- (id)initWithInstance:(__weak id)instance invocation:(NSInvocation *)invocation;
+@property (nonatomic, weak, readonly) id instance;
 @property (nonatomic, strong, readonly) NSArray *arguments;
 @property (nonatomic, strong, readonly) NSInvocation *originalInvocation;
 @end
@@ -924,7 +924,7 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
 
 @synthesize arguments = _arguments;
 
-- (id)initWithInstance:(__unsafe_unretained id)instance invocation:(NSInvocation *)invocation {
+- (id)initWithInstance:(__weak id)instance invocation:(NSInvocation *)invocation {
     NSCParameterAssert(instance);
     NSCParameterAssert(invocation);
     if (self = [super init]) {
