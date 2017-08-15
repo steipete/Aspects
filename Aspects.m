@@ -258,6 +258,11 @@ static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
             if (valueSize == 1 || valueSize == 2 || valueSize == 4 || valueSize == 8) {
                 methodReturnsStructValue = NO;
             }
+#if defined(__LP64__) && __LP64__
+            if (valueSize == 16) {
+                methodReturnsStructValue = NO;
+            }
+#endif
         } @catch (__unused NSException *e) {}
     }
     if (methodReturnsStructValue) {
