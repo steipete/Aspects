@@ -492,6 +492,47 @@ static BOOL aspect_invokeAlias(NSInvocation *invocation, SEL originalSelector)
     return respondsToAlias;
 }
 
+static BOOL aspect_invokeOriginalForwarder(__unsafe_unretained NSObject *self, NSInvocation *invocation)
+{
+    SEL forwardInvocationSEL = @selector(forwardInvocation:);
+    SEL originalForwardInvocationSEL = NSSelectorFromString(AspectsForwardInvocationSelectorName);
+    
+    // grab original ForwardInvocation saved previously
+    BOOL respondsToParent = [self respondsToSelector:originalForwardInvocationSEL];
+    
+    // trying to find implementation on parent(s)
+    if (! respondsToParent) {
+        Method dummyObjectMethod = class_getInstanceMethod(NSObject.class, forwardInvocationSEL);
+        IMP dummyImplementation = method_getImplementation(dummyObjectMethod);
+        
+        Class klass = object_getClass(invocation.target);
+        
+        do {
+            if ([klass instancesRespondToSelector:forwardInvocationSEL]) {
+                // skip Aspects' forwardInvocation method(s)
+                Method parentInvocationMethod = class_getInstanceMethod(klass, forwardInvocationSEL);
+                IMP parentForwarder = method_getImplementation(parentInvocationMethod);
+                
+                if ((IMP)__ASPECTS_ARE_BEING_CALLED__ != parentForwarder
+                    && dummyImplementation != parentForwarder
+                    ) {
+                    // setup forwarder
+                    const char *typeEncoding = method_getTypeEncoding(parentInvocationMethod);
+                    class_replaceMethod(klass, originalForwardInvocationSEL, parentForwarder, typeEncoding);
+                    respondsToParent = YES;
+                    break;
+                }
+            }
+        }while ((klass = class_getSuperclass(klass)));
+    }
+    
+    // ... then call it
+    if (respondsToParent) {
+        ((void( *)(id, SEL, NSInvocation *))objc_msgSend)(self, originalForwardInvocationSEL, invocation);
+    }
+    return respondsToParent;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Aspect Invoke Point
 
@@ -536,12 +577,10 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
     // If no hooks are installed, call original implementation (usually to throw an exception)
     if (!respondsToAlias) {
         invocation.selector = originalSelector;
-        SEL originalForwardInvocationSEL = NSSelectorFromString(AspectsForwardInvocationSelectorName);
-        if ([self respondsToSelector:originalForwardInvocationSEL]) {
-            ((void( *)(id, SEL, NSInvocation *))objc_msgSend)(self, originalForwardInvocationSEL, invocation);
-        }else {
-            [self doesNotRecognizeSelector:invocation.selector];
-        }
+        respondsToAlias = aspect_invokeOriginalForwarder(self, invocation);
+    }
+    if (!respondsToAlias) {
+        [self doesNotRecognizeSelector:invocation.selector];
     }
 
     // Remove any hooks that are queued for deregistration.
