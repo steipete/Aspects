@@ -507,20 +507,25 @@ static BOOL aspect_invokeOriginalForwarder(__unsafe_unretained NSObject *self, N
         
         Class klass = object_getClass(invocation.target);
         
+        BOOL aspectsFound = NO;
+        
         do {
             if ([klass instancesRespondToSelector:forwardInvocationSEL]) {
                 // skip Aspects' forwardInvocation method(s)
                 Method parentInvocationMethod = class_getInstanceMethod(klass, forwardInvocationSEL);
                 IMP parentForwarder = method_getImplementation(parentInvocationMethod);
                 
-                if ((IMP)__ASPECTS_ARE_BEING_CALLED__ != parentForwarder
-                    && dummyImplementation != parentForwarder
-                    ) {
-                    // setup forwarder
-                    const char *typeEncoding = method_getTypeEncoding(parentInvocationMethod);
-                    class_replaceMethod(klass, originalForwardInvocationSEL, parentForwarder, typeEncoding);
-                    respondsToParent = YES;
-                    break;
+                // skip until found the aspectForwarder
+                if (aspectsFound) {
+                    if (dummyImplementation != parentForwarder) {
+                        // setup forwarder
+                        const char *typeEncoding = method_getTypeEncoding(parentInvocationMethod);
+                        class_replaceMethod(klass, originalForwardInvocationSEL, parentForwarder, typeEncoding);
+                        respondsToParent = YES;
+                        break;
+                    }
+                }else {
+                    aspectsFound = ((IMP)__ASPECTS_ARE_BEING_CALLED__ == parentForwarder);
                 }
             }
         }while ((klass = class_getSuperclass(klass)));
@@ -568,18 +573,19 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
         aspect_invoke(objectContainer.insteadAspects, info);
     }else {
         respondsToAlias = aspect_invokeAlias(invocation, originalSelector);
+        // If no hooks are installed, try to call original implementation (usually to throw an exception)
+        if (!respondsToAlias) {
+            invocation.selector = originalSelector;
+            respondsToAlias = aspect_invokeOriginalForwarder(self, invocation);
+        }
     }
 
     // After hooks.
     aspect_invoke(classContainer.afterAspects, info);
     aspect_invoke(objectContainer.afterAspects, info);
 
-    // If no hooks are installed, call original implementation (usually to throw an exception)
     if (!respondsToAlias) {
-        invocation.selector = originalSelector;
-        respondsToAlias = aspect_invokeOriginalForwarder(self, invocation);
-    }
-    if (!respondsToAlias) {
+        // Throw an exception
         [self doesNotRecognizeSelector:invocation.selector];
     }
 
