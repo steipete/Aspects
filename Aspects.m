@@ -103,6 +103,14 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
     return aspect_add((id)self, selector, options, block, error);
 }
 
++ (id<AspectToken>)aspect_hookClassSelector:(SEL)selector
+                                withOptions:(AspectOptions)options
+                                 usingBlock:(id)block
+                                      error:(NSError **)error {
+  Class cls = object_getClass(self.class);
+  return [cls aspect_hookSelector:selector withOptions:options usingBlock:block error:error];
+}
+
 /// @return A token which allows to later deregister the aspect.
 - (id<AspectToken>)aspect_hookSelector:(SEL)selector
                       withOptions:(AspectOptions)options
