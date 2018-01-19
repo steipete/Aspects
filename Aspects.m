@@ -256,16 +256,16 @@ static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
             NSGetSizeAndAlignment(encoding, &valueSize, NULL);
 
 #if defined(__arm__)
-            if (valueSize <= 4 ) {//arm32
+            if (valueSize == 1 ||valueSize == 2 || valueSize == 4 ) {//arm32
                 methodReturnsStructValue = NO;
             }
             
 #elif defined(__LP64__) && __LP64__
-            if (valueSize <= 16) {//x86-64
+            if (valueSize == 1 ||valueSize == 2 || valueSize == 4 ||valueSize == 8 ||valueSize == 16) {//x86-64
                 methodReturnsStructValue = NO;
             }
 #else
-            if (valueSize <= 8 ) {//IA-32
+            if (valueSize == 1 ||valueSize == 2 || valueSize == 4 ||valueSize == 8  ) {//IA-32
                 methodReturnsStructValue = NO;
             }
 #endif
