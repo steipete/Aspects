@@ -22,6 +22,8 @@
 		78573F2519155A74000D3B00 /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 78573F2319155A74000D3B00 /* Aspects.m */; };
 		78D7D77119177C8E002EB314 /* AspectsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 78D7D76F19177C8E002EB314 /* AspectsViewController.m */; };
 		78D7D77219177C8E002EB314 /* AspectsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 78D7D77019177C8E002EB314 /* AspectsViewController.xib */; };
+		BA8B9D77205F635C00D6AA5B /* AspectsSwizz.m in Sources */ = {isa = PBXBuildFile; fileRef = BA8B9D76205F635C00D6AA5B /* AspectsSwizz.m */; };
+		BA8B9D79205F645D00D6AA5B /* AspectsHookTests.m in Sources */ = {isa = PBXBuildFile; fileRef = BA8B9D78205F645D00D6AA5B /* AspectsHookTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +58,9 @@
 		78D7D76E19177C8E002EB314 /* AspectsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AspectsViewController.h; sourceTree = "<group>"; };
 		78D7D76F19177C8E002EB314 /* AspectsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AspectsViewController.m; sourceTree = "<group>"; };
 		78D7D77019177C8E002EB314 /* AspectsViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = AspectsViewController.xib; sourceTree = "<group>"; };
+		BA8B9D75205F635C00D6AA5B /* AspectsSwizz.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AspectsSwizz.h; sourceTree = "<group>"; };
+		BA8B9D76205F635C00D6AA5B /* AspectsSwizz.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AspectsSwizz.m; sourceTree = "<group>"; };
+		BA8B9D78205F645D00D6AA5B /* AspectsHookTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AspectsHookTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,6 +129,8 @@
 				78D7D76E19177C8E002EB314 /* AspectsViewController.h */,
 				78D7D76F19177C8E002EB314 /* AspectsViewController.m */,
 				78D7D77019177C8E002EB314 /* AspectsViewController.xib */,
+				BA8B9D75205F635C00D6AA5B /* AspectsSwizz.h */,
+				BA8B9D76205F635C00D6AA5B /* AspectsSwizz.m */,
 			);
 			path = AspectsDemo;
 			sourceTree = "<group>";
@@ -143,6 +150,7 @@
 			isa = PBXGroup;
 			children = (
 				78573F1919155A2E000D3B00 /* AspectsDemoTests.m */,
+				BA8B9D78205F645D00D6AA5B /* AspectsHookTests.m */,
 				78573F1419155A2E000D3B00 /* Supporting Files */,
 			);
 			path = AspectsDemoTests;
@@ -256,6 +264,7 @@
 			files = (
 				78D7D77119177C8E002EB314 /* AspectsViewController.m in Sources */,
 				78573F0519155A2E000D3B00 /* AspectsAppDelegate.m in Sources */,
+				BA8B9D77205F635C00D6AA5B /* AspectsSwizz.m in Sources */,
 				78573F2519155A74000D3B00 /* Aspects.m in Sources */,
 				78573F0119155A2E000D3B00 /* main.m in Sources */,
 			);
@@ -265,6 +274,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BA8B9D79205F645D00D6AA5B /* AspectsHookTests.m in Sources */,
 				78573F1A19155A2E000D3B00 /* AspectsDemoTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -413,6 +423,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "AspectsDemo/AspectsDemo-Prefix.pch";
 				INFOPLIST_FILE = "AspectsDemo/AspectsDemo-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -426,6 +437,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "AspectsDemo/AspectsDemo-Prefix.pch";
 				INFOPLIST_FILE = "AspectsDemo/AspectsDemo-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -447,6 +459,7 @@
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = "AspectsDemoTests/AspectsDemoTests-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				WRAPPER_EXTENSION = xctest;
@@ -465,6 +478,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "AspectsDemo/AspectsDemo-Prefix.pch";
 				INFOPLIST_FILE = "AspectsDemoTests/AspectsDemoTests-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				WRAPPER_EXTENSION = xctest;

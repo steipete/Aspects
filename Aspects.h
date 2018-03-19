@@ -7,6 +7,14 @@
 
 #import <Foundation/Foundation.h>
 
+@interface AspectManager : NSObject
+
+@property (nonatomic, copy) NSArray <NSString *> *messagePrefixArray;
+
++ (instancetype)shareManager;
+
+@end
+
 typedef NS_OPTIONS(NSUInteger, AspectOptions) {
     AspectPositionAfter   = 0,            /// Called after the original implementation (default)
     AspectPositionInstead = 1,            /// Will replace the original implementation.
