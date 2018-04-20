@@ -435,12 +435,12 @@ static void _aspect_modifySwizzledClasses(void (^block)(NSMutableSet *swizzledCl
 
 static Class aspect_swizzleClassInPlace(Class klass) {
     NSCParameterAssert(klass);
-    NSString *className = NSStringFromClass(klass);
+    NSString *classIdentification = [NSString stringWithFormat:@"%@:%p",NSStringFromClass(klass),klass];
 
     _aspect_modifySwizzledClasses(^(NSMutableSet *swizzledClasses) {
-        if (![swizzledClasses containsObject:className]) {
+        if (![swizzledClasses containsObject:classIdentification]) {
             aspect_swizzleForwardInvocation(klass);
-            [swizzledClasses addObject:className];
+            [swizzledClasses addObject:classIdentification];
         }
     });
     return klass;
@@ -448,12 +448,12 @@ static Class aspect_swizzleClassInPlace(Class klass) {
 
 static void aspect_undoSwizzleClassInPlace(Class klass) {
     NSCParameterAssert(klass);
-    NSString *className = NSStringFromClass(klass);
+    NSString *classIdentification = [NSString stringWithFormat:@"%@:%p",NSStringFromClass(klass),klass];
 
     _aspect_modifySwizzledClasses(^(NSMutableSet *swizzledClasses) {
-        if ([swizzledClasses containsObject:className]) {
+        if ([swizzledClasses containsObject:classIdentification]) {
             aspect_undoSwizzleForwardInvocation(klass);
-            [swizzledClasses removeObject:className];
+            [swizzledClasses removeObject:classIdentification];
         }
     });
 }
