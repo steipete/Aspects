@@ -12,7 +12,9 @@
 		34B986A51B1E491000DE719D /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 34B986841B1DE2BE00DE719D /* Aspects.m */; };
 		34B986A61B1E491300DE719D /* Aspects.h in Headers */ = {isa = PBXBuildFile; fileRef = 34B9866C1B1DE0CE00DE719D /* Aspects.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7376F8CD1B8EA767009CAB74 /* Aspects.h in Headers */ = {isa = PBXBuildFile; fileRef = 34B9866C1B1DE0CE00DE719D /* Aspects.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		7376F8D61B8EB1FA009CAB74 /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 34B986841B1DE2BE00DE719D /* Aspects.m */; settings = {ASSET_TAGS = (); }; };
+		7376F8D61B8EB1FA009CAB74 /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 34B986841B1DE2BE00DE719D /* Aspects.m */; };
+		D75B861321BB41B400FD8DD2 /* Aspects.h in Headers */ = {isa = PBXBuildFile; fileRef = 34B9866C1B1DE0CE00DE719D /* Aspects.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		D75B861421BB41B900FD8DD2 /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 34B986841B1DE2BE00DE719D /* Aspects.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +25,7 @@
 		34B9868C1B1E48CD00DE719D /* Aspects.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Aspects.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7376F8C31B8EA670009CAB74 /* Aspects.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Aspects.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7376F8C71B8EA670009CAB74 /* Info-watch.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-watch.plist"; sourceTree = "<group>"; };
+		D75B860B21BB40B400FD8DD2 /* Aspects.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Aspects.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +50,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D75B860821BB40B400FD8DD2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -64,6 +74,7 @@
 				34B986671B1DE0CE00DE719D /* Aspects.framework */,
 				34B9868C1B1E48CD00DE719D /* Aspects.framework */,
 				7376F8C31B8EA670009CAB74 /* Aspects.framework */,
+				D75B860B21BB40B400FD8DD2 /* Aspects.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -111,6 +122,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				7376F8CD1B8EA767009CAB74 /* Aspects.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D75B860621BB40B400FD8DD2 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D75B861321BB41B400FD8DD2 /* Aspects.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -171,6 +190,24 @@
 			productReference = 7376F8C31B8EA670009CAB74 /* Aspects.framework */;
 			productType = "com.apple.product-type.framework";
 		};
+		D75B860A21BB40B400FD8DD2 /* Aspects-tvOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D75B861221BB40B400FD8DD2 /* Build configuration list for PBXNativeTarget "Aspects-tvOS" */;
+			buildPhases = (
+				D75B860621BB40B400FD8DD2 /* Headers */,
+				D75B860721BB40B400FD8DD2 /* Sources */,
+				D75B860821BB40B400FD8DD2 /* Frameworks */,
+				D75B860921BB40B400FD8DD2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Aspects-tvOS";
+			productName = Aspects;
+			productReference = D75B860B21BB40B400FD8DD2 /* Aspects.framework */;
+			productType = "com.apple.product-type.framework";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -189,6 +226,10 @@
 					7376F8C21B8EA670009CAB74 = {
 						CreatedOnToolsVersion = 7.0;
 					};
+					D75B860A21BB40B400FD8DD2 = {
+						CreatedOnToolsVersion = 10.1;
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = 34B986611B1DE0CE00DE719D /* Build configuration list for PBXProject "Aspects" */;
@@ -206,6 +247,7 @@
 				34B986661B1DE0CE00DE719D /* Aspects-iOS */,
 				34B9868B1B1E48CD00DE719D /* Aspects-Mac */,
 				7376F8C21B8EA670009CAB74 /* Aspects-watchOS */,
+				D75B860A21BB40B400FD8DD2 /* Aspects-tvOS */,
 			);
 		};
 /* End PBXProject section */
@@ -226,6 +268,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		7376F8C11B8EA670009CAB74 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D75B860921BB40B400FD8DD2 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -256,6 +305,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				7376F8D61B8EB1FA009CAB74 /* Aspects.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D75B860721BB40B400FD8DD2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D75B861421BB41B900FD8DD2 /* Aspects.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -463,6 +520,85 @@
 			};
 			name = Release;
 		};
+		D75B861021BB40B400FD8DD2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = Aspects;
+				SDKROOT = appletvos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 10;
+			};
+			name = Debug;
+		};
+		D75B861121BB40B400FD8DD2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Automatic;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = Aspects;
+				SDKROOT = appletvos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 10;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -498,6 +634,15 @@
 			buildConfigurations = (
 				7376F8C81B8EA670009CAB74 /* Debug */,
 				7376F8C91B8EA670009CAB74 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D75B861221BB40B400FD8DD2 /* Build configuration list for PBXNativeTarget "Aspects-tvOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D75B861021BB40B400FD8DD2 /* Debug */,
+				D75B861121BB40B400FD8DD2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
