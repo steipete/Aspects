@@ -5,7 +5,7 @@ A delightful, simple library for aspect oriented programming by [@steipete](http
 
 **Think of Aspects as method swizzling on steroids. It allows you to add code to existing methods per class or per instance**, whilst thinking of the insertion point e.g. before/instead/after. Aspects automatically deals with calling super and is easier to use than regular method swizzling.
 
-This is stable and used in hundreds of apps since it's part of [PSPDFKit, an iOS PDF framework that ships with apps like Dropbox or Evernote](http://pspdfkit.com), and now I finally made it open source.
+Aspects hooks deep into the class hierarchy and creates dynamic subclasses, much like KVO. There's known issues with this approach, and to this date (February 2019) I do not recommend using Aspects in production. We use it for partial test mocks in, [PSPDFKit, an iOS PDF framework that ships with apps like Dropbox or Evernote](http://pspdfkit.com), it's also very useful for quickly hacking something up.
 
 Aspects extends `NSObject` with the following methods:
 
