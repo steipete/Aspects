@@ -1,5 +1,4 @@
 language: objective-c
 script:
-- xcodebuild -project AspectsDemo/AspectsDemo.xcodeproj -scheme AspectsDemo -sdk iphonesimulator ONLY_ACTIVE_ARCH=NO test
-- xcodebuild -project AspectsDemo/AspectsDemo.xcodeproj -scheme AspectsDemo -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPad Retina (64-bit),OS=8.1' test
+- xcodebuild -project AspectsDemo/AspectsDemo.xcodeproj -scheme AspectsDemo -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone X,OS=11.3' test
 - xcodebuild -project AspectsDemoOSX/AspectsDemoOSX.xcodeproj -scheme AspectsDemoOSX test

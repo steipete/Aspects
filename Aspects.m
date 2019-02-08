@@ -401,9 +401,9 @@ static void aspect_swizzleForwardInvocation(Class klass) {
 static void aspect_undoSwizzleForwardInvocation(Class klass) {
     NSCParameterAssert(klass);
     Method originalMethod = class_getInstanceMethod(klass, NSSelectorFromString(AspectsForwardInvocationSelectorName));
-    Method objectMethod = class_getInstanceMethod(NSObject.class, @selector(forwardInvocation:));
-    // There is no class_removeMethod, so the best we can do is to retore the original implementation, or use a dummy.
-    IMP originalImplementation = method_getImplementation(originalMethod ?: objectMethod);
+    Method superClassMethod = class_getInstanceMethod(class_getSuperclass(klass) ?: NSObject.class, @selector(forwardInvocation:));
+    // There is no class_removeMethod, so the best we can do is to retore the original implementation, or use superclass's.
+    IMP originalImplementation = method_getImplementation(originalMethod ?: superClassMethod);
     class_replaceMethod(klass, @selector(forwardInvocation:), originalImplementation, "v@:@");
 
     AspectLog(@"Aspects: %@ has been restored.", NSStringFromClass(klass));
