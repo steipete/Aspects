@@ -551,6 +551,98 @@
     XCTAssertFalse([aspectToken remove], @"Must not able to deregister again");
 }
 
+- (void)testMultiInstanceTokenDeregistration {
+    TestClass *testClass = [TestClass new];
+    
+    __block BOOL testCallCalled = NO;
+    id aspectToken = [testClass aspect_hookSelector:@selector(testCall) withOptions:AspectPositionInstead usingBlock:^(id<AspectInfo> info) {
+        testCallCalled = YES;
+    } error:NULL];
+    XCTAssertNotNil(aspectToken, @"Must return a token.");
+    
+    __block BOOL called = NO;
+    id<AspectToken> blockAspectToken = [testClass aspect_hookSelector:@selector(testCallAndExecuteBlock:) withOptions:AspectPositionAfter usingBlock:^{
+        called = YES;
+    } error:NULL];
+    XCTAssertNotNil(blockAspectToken, @"Must return a token.");
+    
+    [testClass testCallAndExecuteBlock:NULL];
+    XCTAssertTrue(called, @"Flag must have been set.");
+    
+    [testClass testCall];
+    XCTAssertTrue(testCallCalled, @"Hook must work.");
+    
+    XCTAssertNotEqualObjects(testClass.class, object_getClass(testClass), @"Object must have a custom subclass.");
+    XCTAssertTrue([aspectToken remove], @"Deregistration must work");
+    testCallCalled = NO;
+    [testClass testCall];
+    XCTAssertFalse(testCallCalled, @"Hook must no longer work.");
+    
+    called = NO;
+    [testClass testCallAndExecuteBlock:NULL];
+    XCTAssertTrue(called, @"Flag must have been set.");
+    
+    XCTAssertTrue([blockAspectToken remove], @"Deregistration must work");
+    called = NO;
+    [testClass testCallAndExecuteBlock:NULL];
+    XCTAssertFalse(testCallCalled, @"Hook must no longer work.");
+    
+    XCTAssertEqualObjects(testClass.class, object_getClass(testClass), @"Object must not have a custom subclass.");
+    
+    XCTAssertFalse([aspectToken remove], @"Deregistration must not work twice");
+    XCTAssertFalse([blockAspectToken remove], @"Deregistration must not work twice");
+}
+
+- (void)testInstanceAndGlobalTokenDeregistration {
+    TestClass *testClass = [TestClass new];
+    
+    __block BOOL instanceCallCalled = NO;
+    id aspectToken = [testClass aspect_hookSelector:@selector(testCall) withOptions:AspectPositionInstead usingBlock:^(id<AspectInfo> info) {
+        instanceCallCalled = YES;
+    } error:NULL];
+    XCTAssertNotNil(aspectToken, @"Must return a token.");
+    
+    __block BOOL globalCallCalled = NO;
+    id globalAspectToken = [TestClass aspect_hookSelector:@selector(testCall) withOptions:AspectPositionInstead usingBlock:^(id<AspectInfo> info) {
+        globalCallCalled = YES;
+    } error:NULL];
+    XCTAssertNotNil(globalAspectToken, @"Must return a token.");
+    
+    [testClass testCall];
+    XCTAssertTrue(globalAspectToken, @"Hook must work.");
+    XCTAssertTrue(instanceCallCalled, @"Hook must work.");
+    
+    XCTAssertTrue([aspectToken remove], @"Deregistration must work");
+    instanceCallCalled = NO;
+    globalCallCalled = NO;
+    [testClass testCall];
+    XCTAssertFalse(instanceCallCalled, @"Hook must no longer work.");
+    XCTAssertTrue(globalCallCalled, @"Hook must work.");
+    
+    aspectToken = [testClass aspect_hookSelector:@selector(testCall) withOptions:AspectPositionInstead usingBlock:^(id<AspectInfo> info) {
+        instanceCallCalled = YES;
+    } error:NULL];
+    XCTAssertNotNil(aspectToken, @"Must return a token.");
+    
+    XCTAssertTrue([globalAspectToken remove], @"Deregistration must work");
+    globalCallCalled = NO;
+    instanceCallCalled = NO;
+    [testClass testCall];
+    XCTAssertTrue(instanceCallCalled, @"Hook must work.");
+    XCTAssertFalse(globalCallCalled, @"Hook must no longer work.");
+    
+    XCTAssertTrue([aspectToken remove], @"Deregistration must work");
+    instanceCallCalled = NO;
+    globalCallCalled = NO;
+    [testClass testCall];
+    XCTAssertFalse(instanceCallCalled, @"Hook must work.");
+    XCTAssertFalse(globalCallCalled, @"Hook must no longer work.");
+    
+    Method forwardInvocationMethod = class_getInstanceMethod(testClass.class, @selector(forwardInvocation:));
+    Method objectMethod = class_getInstanceMethod(NSObject.class, @selector(forwardInvocation:));
+    XCTAssertEqual(method_getImplementation(forwardInvocationMethod), method_getImplementation(objectMethod), @"Implementations must not be equal");
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Test KVO
 

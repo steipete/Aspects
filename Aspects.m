@@ -90,6 +90,7 @@ if (error) { *error = [NSError errorWithDomain:AspectErrorDomain code:errorCode 
 NSString *const AspectErrorDomain = @"AspectErrorDomain";
 static NSString *const AspectsSubclassSuffix = @"_Aspects_";
 static NSString *const AspectsMessagePrefix = @"aspects_";
+void *AspectsAliasSelecterName2ContainerDictionary = &AspectsAliasSelecterName2ContainerDictionary;
 
 @implementation NSObject (Aspects)
 
@@ -272,6 +273,7 @@ static void aspect_prepareClassAndHookSelector(NSObject *self, SEL selector, NSE
     Class klass = aspect_hookClass(self, error);
     Method targetMethod = class_getInstanceMethod(klass, selector);
     IMP targetMethodIMP = method_getImplementation(targetMethod);
+    NSString *className = NSStringFromClass(klass);
     if (!aspect_isMsgForwardIMP(targetMethodIMP)) {
         // Make a method alias for the existing method implementation, it not already copied.
         const char *typeEncoding = method_getTypeEncoding(targetMethod);
@@ -284,7 +286,16 @@ static void aspect_prepareClassAndHookSelector(NSObject *self, SEL selector, NSE
         // We use forwardInvocation to hook in.
         class_replaceMethod(klass, selector, aspect_getMsgForwardIMP(self, selector), typeEncoding);
         AspectLog(@"Aspects: Installed hook for -[%@ %@].", klass, NSStringFromSelector(selector));
+    } else if ([className hasSuffix:AspectsSubclassSuffix]) {
+        /**
+         * global selector hack -> singal instance selector hack -> remove global selector hack 
+         * it will clean up forward method in class, but also in class_Aspects_
+         * it should have 2 methods in class and class_Aspects_
+         */
+        const char *typeEncoding = method_getTypeEncoding(targetMethod);
+        class_addMethod(klass, selector, method_getImplementation(targetMethod), typeEncoding);
     }
+
 }
 
 // Will undo the runtime changes made.
@@ -297,8 +308,47 @@ static void aspect_cleanupHookedClassAndSelector(NSObject *self, SEL selector) {
     if (isMetaClass) {
         klass = (Class)self;
     }
+    
+    // Deregister global tracked selector
+    aspect_deregisterTrackedSelector(self, selector);
+    // Get the aspect container and check if there are any hooks remaining. Clean up if there are not.
+    AspectsContainer *container = aspect_getContainerForObjectWithoutCreate(self, selector);
+    if (!container.hasAspects) {
+        // Destroy the container
+        aspect_destroyContainerForObject(self, selector);
+    }
+    
+    if (isMetaClass) {
+        aspect_cleanupHookedForwardSelector(klass, selector);
+         // if there is no global selector hack
+        if (aspect_getAliasSelectorName2ContainerDictionaryForObject(self).count == 0) {
+            // Class is most likely swizzled in place. Undo that.
+            aspect_undoSwizzleClassInPlace((Class)self);
+        }
+    } else {
+        if (aspect_getContainerForClass(klass, selector) == nil) {
+            aspect_cleanupHookedForwardSelector(klass, selector);
+        }
+        //recover class
+        if (aspect_getAliasSelectorName2ContainerDictionaryForObject(self).count == 0) {
+            // Figure out how the class was modified to undo the changes.
+            NSString *className = NSStringFromClass(klass);
+            if ([className hasSuffix:AspectsSubclassSuffix]) {
+                Class originalClass = NSClassFromString([className stringByReplacingOccurrencesOfString:AspectsSubclassSuffix withString:@""]);
+                NSCAssert(originalClass != nil, @"Original class must exist");
+                object_setClass(self, originalClass);
+                AspectLog(@"Aspects: %@ has been restored.", NSStringFromClass(originalClass));
+                
+                // We can only dispose the class pair if we can ensure that no instances exist using our subclass.
+                // Since we don't globally track this, we can't ensure this - but there's also not much overhead in keeping it around.
+                //objc_disposeClassPair(object.class);
+            }
+        }
+    }
+}
 
-    // Check if the method is marked as forwarded and undo that.
+// clean up forward method
+static void aspect_cleanupHookedForwardSelector(Class klass, SEL selector) {
     Method targetMethod = class_getInstanceMethod(klass, selector);
     IMP targetMethodIMP = method_getImplementation(targetMethod);
     if (aspect_isMsgForwardIMP(targetMethodIMP)) {
@@ -308,39 +358,9 @@ static void aspect_cleanupHookedClassAndSelector(NSObject *self, SEL selector) {
         Method originalMethod = class_getInstanceMethod(klass, aliasSelector);
         IMP originalIMP = method_getImplementation(originalMethod);
         NSCAssert(originalMethod, @"Original implementation for %@ not found %@ on %@", NSStringFromSelector(selector), NSStringFromSelector(aliasSelector), klass);
-
+        
         class_replaceMethod(klass, selector, originalIMP, typeEncoding);
         AspectLog(@"Aspects: Removed hook for -[%@ %@].", klass, NSStringFromSelector(selector));
-    }
-
-    // Deregister global tracked selector
-    aspect_deregisterTrackedSelector(self, selector);
-
-    // Get the aspect container and check if there are any hooks remaining. Clean up if there are not.
-    AspectsContainer *container = aspect_getContainerForObject(self, selector);
-    if (!container.hasAspects) {
-        // Destroy the container
-        aspect_destroyContainerForObject(self, selector);
-
-        // Figure out how the class was modified to undo the changes.
-        NSString *className = NSStringFromClass(klass);
-        if ([className hasSuffix:AspectsSubclassSuffix]) {
-            Class originalClass = NSClassFromString([className stringByReplacingOccurrencesOfString:AspectsSubclassSuffix withString:@""]);
-            NSCAssert(originalClass != nil, @"Original class must exist");
-            object_setClass(self, originalClass);
-            AspectLog(@"Aspects: %@ has been restored.", NSStringFromClass(originalClass));
-
-            // We can only dispose the class pair if we can ensure that no instances exist using our subclass.
-            // Since we don't globally track this, we can't ensure this - but there's also not much overhead in keeping it around.
-            //objc_disposeClassPair(object.class);
-        }else {
-            // Class is most likely swizzled in place. Undo that.
-            if (isMetaClass) {
-                aspect_undoSwizzleClassInPlace((Class)self);
-            }else if (self.class != klass) {
-            	aspect_undoSwizzleClassInPlace(klass);
-            }
-        }
     }
 }
 
@@ -477,7 +497,7 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
     SEL originalSelector = invocation.selector;
 	SEL aliasSelector = aspect_aliasForSelector(invocation.selector);
     invocation.selector = aliasSelector;
-    AspectsContainer *objectContainer = objc_getAssociatedObject(self, aliasSelector);
+    AspectsContainer *objectContainer = aspect_getContainerForObjectWithoutCreate(self, aliasSelector);
     AspectsContainer *classContainer = aspect_getContainerForClass(object_getClass(self), aliasSelector);
     AspectInfo *info = [[AspectInfo alloc] initWithInstance:self invocation:invocation];
     NSArray *aspectsToRemove = nil;
@@ -524,15 +544,39 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Aspect Container Management
 
+static NSMutableDictionary *aspect_getAliasSelectorName2ContainerDictionaryForObject(NSObject *self) {
+    NSMutableDictionary *aliasSelectorName2ContainerDictionary = objc_getAssociatedObject(self, AspectsAliasSelecterName2ContainerDictionary);
+    if (!aliasSelectorName2ContainerDictionary) {
+        aliasSelectorName2ContainerDictionary = [NSMutableDictionary dictionary];
+        objc_setAssociatedObject(self, AspectsAliasSelecterName2ContainerDictionary, aliasSelectorName2ContainerDictionary, OBJC_ASSOCIATION_RETAIN);
+    }
+    return aliasSelectorName2ContainerDictionary;
+}
+
 // Loads or creates the aspect container.
 static AspectsContainer *aspect_getContainerForObject(NSObject *self, SEL selector) {
     NSCParameterAssert(self);
-    SEL aliasSelector = aspect_aliasForSelector(selector);
-    AspectsContainer *aspectContainer = objc_getAssociatedObject(self, aliasSelector);
+    SEL aliasSelector = selector;
+    if (![NSStringFromSelector(selector) hasPrefix:AspectsMessagePrefix]) {
+        aliasSelector = aspect_aliasForSelector(selector);
+    }
+    NSString *selectorName = NSStringFromSelector(aliasSelector);
+    AspectsContainer *aspectContainer = aspect_getAliasSelectorName2ContainerDictionaryForObject(self)[selectorName];
     if (!aspectContainer) {
         aspectContainer = [AspectsContainer new];
-        objc_setAssociatedObject(self, aliasSelector, aspectContainer, OBJC_ASSOCIATION_RETAIN);
+        [aspect_getAliasSelectorName2ContainerDictionaryForObject(self) setObject:aspectContainer forKey:selectorName];
     }
+    return aspectContainer;
+}
+
+static AspectsContainer *aspect_getContainerForObjectWithoutCreate(NSObject *self, SEL selector) {
+    NSCParameterAssert(self);
+    SEL aliasSelector = selector;
+    if (![NSStringFromSelector(selector) hasPrefix:AspectsMessagePrefix]) {
+        aliasSelector = aspect_aliasForSelector(selector);
+    }
+    NSString *selectorName = NSStringFromSelector(aliasSelector);
+    AspectsContainer *aspectContainer = aspect_getAliasSelectorName2ContainerDictionaryForObject(self)[selectorName];
     return aspectContainer;
 }
 
@@ -540,17 +584,22 @@ static AspectsContainer *aspect_getContainerForClass(Class klass, SEL selector) 
     NSCParameterAssert(klass);
     AspectsContainer *classContainer = nil;
     do {
-        classContainer = objc_getAssociatedObject(klass, selector);
-        if (classContainer.hasAspects) break;
+        AspectsContainer *container = aspect_getContainerForObjectWithoutCreate((id)klass, selector);
+        if (container.hasAspects) {
+            classContainer = container;
+            break;
+        }
     }while ((klass = class_getSuperclass(klass)));
-
+    
     return classContainer;
 }
 
 static void aspect_destroyContainerForObject(id<NSObject> self, SEL selector) {
     NSCParameterAssert(self);
     SEL aliasSelector = aspect_aliasForSelector(selector);
-    objc_setAssociatedObject(self, aliasSelector, nil, OBJC_ASSOCIATION_RETAIN);
+    NSString *selectorName = NSStringFromSelector(aliasSelector);
+    NSMutableDictionary *aliasSelectorName2ContainerDictionary = aspect_getAliasSelectorName2ContainerDictionaryForObject(self);
+    [aliasSelectorName2ContainerDictionary removeObjectForKey:selectorName];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
