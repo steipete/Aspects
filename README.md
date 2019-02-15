@@ -149,6 +149,33 @@ You can use the invocation object to customize the return value:
     } error:NULL];
 ```
 
+Using Aspects with Swift
+------------------------
+
+To use Aspects with Swift you need to cast closure to `AnyObject`. Following Joe Groff's advice ([1](https://twitter.com/jckarter/status/610484016848842752), [2](https://twitter.com/jckarter/status/610484089494212609)): 
+
+- Swift 1.2
+
+  ```swift
+  let block: @objc_block (AspectInfo, animated: Bool) -> Void = { info, _ in
+    println("View Controller \(info.instance()) will appear animated: \(info.arguments())")
+  }
+  UIViewController.aspect_hookSelector("viewWillAppear:", withOptions: .PositionAfter, usingBlock: unsafeBitCast(block, AnyObject.self), error: nil)
+
+  ```
+
+- Swift 2.0
+
+  ```swift
+  let block: @convention(block) (AspectInfo, animated: Bool) -> Void = { info, _ in
+    print("View Controller \(info.instance()) will appear animated: \(info.arguments())")
+  }
+  do {
+    try UIViewController.aspect_hookSelector("viewWillAppear:", withOptions: .PositionAfter, usingBlock:  unsafeBitCast(block, AnyObject.self))
+  } catch _ {
+  }
+ ```
+
 Installation
 ------------
 The simplest option is to use `pod "Aspects"`.
