@@ -388,12 +388,18 @@ static Class aspect_hookClass(NSObject *self, NSError **error) {
 }
 
 static NSString *const AspectsForwardInvocationSelectorName = @"__aspects_forwardInvocation:";
+static NSString *const AspectsForwardInvocationOrignSelectorName = @"__aspects_orignForwardInvocation:";
 static void aspect_swizzleForwardInvocation(Class klass) {
     NSCParameterAssert(klass);
     // If there is no method, replace will act like class_addMethod.
-    IMP originalImplementation = class_replaceMethod(klass, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, "v@:@");
+    Method forwardMethod = class_getInstanceMethod(klass, @selector(forwardInvocation:));
+    IMP originalImplementation = method_getImplementation(forwardMethod);
     if (originalImplementation) {
-        class_addMethod(klass, NSSelectorFromString(AspectsForwardInvocationSelectorName), originalImplementation, "v@:@");
+        class_addMethod(klass, NSSelectorFromString(AspectsForwardInvocationOrignSelectorName), originalImplementation, "v@:@");
+    }
+    IMP replaceImplementation = class_replaceMethod(klass, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, "v@:@");
+    if (replaceImplementation) {
+        class_addMethod(klass, NSSelectorFromString(AspectsForwardInvocationSelectorName), replaceImplementation, "v@:@");
     }
     AspectLog(@"Aspects: %@ is now aspect aware.", NSStringFromClass(klass));
 }
@@ -512,7 +518,16 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
         if ([self respondsToSelector:originalForwardInvocationSEL]) {
             ((void( *)(id, SEL, NSInvocation *))objc_msgSend)(self, originalForwardInvocationSEL, invocation);
         }else {
-            [self doesNotRecognizeSelector:invocation.selector];
+            SEL originalForwardInvocationSEL = NSSelectorFromString(AspectsForwardInvocationOrignSelectorName);
+            Class klass = object_getClass(invocation.target);
+            Method originalForwardMethod = class_getInstanceMethod(klass, originalForwardInvocationSEL);
+            // There is no class_removeMethod, so the best we can do is to retore the original implementation, or use a dummy.
+            IMP originalImplementation = method_getImplementation(originalForwardMethod);
+            if (originalImplementation) {
+                ((void( *)(id, SEL, NSInvocation *))originalImplementation)(self, selector, invocation);
+            }else {
+                [self doesNotRecognizeSelector:invocation.selector];
+            }
         }
     }
 
