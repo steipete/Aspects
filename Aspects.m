@@ -12,6 +12,7 @@
 
 #define AspectLog(...)
 //#define AspectLog(...) do { NSLog(__VA_ARGS__); }while(0)
+//#define AspectLogError(...)
 #define AspectLogError(...) do { NSLog(__VA_ARGS__); }while(0)
 
 // Block internals.
@@ -42,6 +43,7 @@ typedef struct _AspectBlock {
 @property (nonatomic, unsafe_unretained, readonly) id instance;
 @property (nonatomic, strong, readonly) NSArray *arguments;
 @property (nonatomic, strong, readonly) NSInvocation *originalInvocation;
+@property (nonatomic, strong, readonly) id returnValue;
 @end
 
 // Tracks a single aspect.
@@ -79,6 +81,7 @@ typedef struct _AspectBlock {
 
 @interface NSInvocation (Aspects)
 - (NSArray *)aspects_arguments;
+- (id)aspects_return_value;
 @end
 
 #define AspectPositionFilter 0x07
@@ -728,9 +731,10 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
 // Thanks to the ReactiveCocoa team for providing a generic solution for this.
 - (id)aspect_argumentAtIndex:(NSUInteger)index {
 	const char *argType = [self.methodSignature getArgumentTypeAtIndex:index];
+	
 	// Skip const type qualifier.
 	if (argType[0] == _C_CONST) argType++;
-
+    
 #define WRAP_AND_RETURN(type) do { type val = 0; [self getArgument:&val atIndex:(NSInteger)index]; return @(val); } while (0)
 	if (strcmp(argType, @encode(id)) == 0 || strcmp(argType, @encode(Class)) == 0) {
 		__autoreleasing id returnObj;
@@ -782,10 +786,10 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
 	} else {
 		NSUInteger valueSize = 0;
 		NSGetSizeAndAlignment(argType, &valueSize, NULL);
-
+        
 		unsigned char valueBytes[valueSize];
 		[self getArgument:valueBytes atIndex:(NSInteger)index];
-
+        
 		return [NSValue valueWithBytes:valueBytes objCType:argType];
 	}
 	return nil;
@@ -798,6 +802,77 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
 		[argumentsArray addObject:[self aspect_argumentAtIndex:idx] ?: NSNull.null];
 	}
 	return [argumentsArray copy];
+}
+
+- (id)aspects_return_value{
+    if([self.methodSignature methodReturnLength] == 0)
+        return nil;
+    
+    const char *argType = [self.methodSignature methodReturnType];
+    // Skip const type qualifier.
+	if (argType[0] == _C_CONST) argType++;
+    
+#define WRAP_AND_RETURN(type) do { type val = 0; [self getReturnValue:&val]; return @(val); } while (0)
+	if (strcmp(argType, @encode(id)) == 0 || strcmp(argType, @encode(Class)) == 0) {
+		__autoreleasing id returnObj;
+		[self getReturnValue:&returnObj];
+		return returnObj;
+	} else if (strcmp(argType, @encode(SEL)) == 0) {
+        SEL selector = 0;
+        [self getReturnValue:&selector];
+        return NSStringFromSelector(selector);
+    } else if (strcmp(argType, @encode(Class)) == 0) {
+        __autoreleasing Class theClass = Nil;
+        [self getReturnValue:&theClass];
+        return theClass;
+        // Using this list will box the number with the appropriate constructor, instead of the generic NSValue.
+	} else if (strcmp(argType, @encode(char)) == 0) {
+		WRAP_AND_RETURN(char);
+	} else if (strcmp(argType, @encode(int)) == 0) {
+		WRAP_AND_RETURN(int);
+	} else if (strcmp(argType, @encode(short)) == 0) {
+		WRAP_AND_RETURN(short);
+	} else if (strcmp(argType, @encode(long)) == 0) {
+		WRAP_AND_RETURN(long);
+	} else if (strcmp(argType, @encode(long long)) == 0) {
+		WRAP_AND_RETURN(long long);
+	} else if (strcmp(argType, @encode(unsigned char)) == 0) {
+		WRAP_AND_RETURN(unsigned char);
+	} else if (strcmp(argType, @encode(unsigned int)) == 0) {
+		WRAP_AND_RETURN(unsigned int);
+	} else if (strcmp(argType, @encode(unsigned short)) == 0) {
+		WRAP_AND_RETURN(unsigned short);
+	} else if (strcmp(argType, @encode(unsigned long)) == 0) {
+		WRAP_AND_RETURN(unsigned long);
+	} else if (strcmp(argType, @encode(unsigned long long)) == 0) {
+		WRAP_AND_RETURN(unsigned long long);
+	} else if (strcmp(argType, @encode(float)) == 0) {
+		WRAP_AND_RETURN(float);
+	} else if (strcmp(argType, @encode(double)) == 0) {
+		WRAP_AND_RETURN(double);
+	} else if (strcmp(argType, @encode(BOOL)) == 0) {
+		WRAP_AND_RETURN(BOOL);
+	} else if (strcmp(argType, @encode(bool)) == 0) {
+		WRAP_AND_RETURN(BOOL);
+	} else if (strcmp(argType, @encode(char *)) == 0) {
+		WRAP_AND_RETURN(const char *);
+	} else if (strcmp(argType, @encode(void (^)(void))) == 0) {
+		__unsafe_unretained id block = nil;
+		[self getReturnValue:&block];
+		return [block copy];
+	} else {
+		NSUInteger valueSize = 0;
+		NSGetSizeAndAlignment(argType, &valueSize, NULL);
+        
+		unsigned char valueBytes[valueSize];
+		[self getReturnValue:valueBytes];
+        
+		return [NSValue valueWithBytes:valueBytes objCType:argType];
+	}
+	return nil;
+#undef WRAP_AND_RETURN
+    
+    
 }
 
 @end
@@ -923,6 +998,7 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
 @implementation AspectInfo
 
 @synthesize arguments = _arguments;
+@synthesize returnValue = _returnValue;
 
 - (id)initWithInstance:(__unsafe_unretained id)instance invocation:(NSInvocation *)invocation {
     NSCParameterAssert(instance);
@@ -940,6 +1016,12 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
         _arguments = self.originalInvocation.aspects_arguments;
     }
     return _arguments;
+}
+- (id)returnValue{
+    if(!_returnValue){
+        _returnValue = self.originalInvocation.aspects_return_value;
+    }
+    return _returnValue;
 }
 
 @end
