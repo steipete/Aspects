@@ -393,8 +393,13 @@ static void aspect_swizzleForwardInvocation(Class klass) {
     // If there is no method, replace will act like class_addMethod.
     IMP originalImplementation = class_replaceMethod(klass, @selector(forwardInvocation:), (IMP)__ASPECTS_ARE_BEING_CALLED__, "v@:@");
     if (originalImplementation) {
-        class_addMethod(klass, NSSelectorFromString(AspectsForwardInvocationSelectorName), originalImplementation, "v@:@");
-    }
+          BOOL add= class_addMethod(klass, NSSelectorFromString(AspectsForwardInvocationSelectorName), originalImplementation, "v@:@");
+          if (!add) {
+              Method ORIGMethod = class_getInstanceMethod(klass, NSSelectorFromString(AspectsForwardInvocationSelectorName));
+              method_setImplementation(ORIGMethod, originalImplementation);
+          }
+  }
+
     AspectLog(@"Aspects: %@ is now aspect aware.", NSStringFromClass(klass));
 }
 
@@ -438,7 +443,7 @@ static Class aspect_swizzleClassInPlace(Class klass) {
     NSString *className = NSStringFromClass(klass);
 
     _aspect_modifySwizzledClasses(^(NSMutableSet *swizzledClasses) {
-        if (![swizzledClasses containsObject:className]) {
+        if (class_getMethodImplementation(klass, @selector(forwardInvocation:)) != (IMP)__ASPECTS_ARE_BEING_CALLED__) {
             aspect_swizzleForwardInvocation(klass);
             [swizzledClasses addObject:className];
         }

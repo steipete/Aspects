@@ -13,23 +13,15 @@
 @implementation AspectsAppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    AspectsViewController *aspectsController = [AspectsViewController new];
-    self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    self.window.backgroundColor = [UIColor whiteColor];
-    self.window.rootViewController = [[UINavigationController alloc] initWithRootViewController:aspectsController];
-    [self.window makeKeyAndVisible];
-
-    // Ignore hooks when we are testing.
-    if (!NSClassFromString(@"XCTestCase")) {
-        [aspectsController aspect_hookSelector:@selector(buttonPressed:) withOptions:0 usingBlock:^(id info, id sender) {
-            NSLog(@"Button was pressed by: %@", sender);
-        } error:NULL];
-
-        [aspectsController aspect_hookSelector:@selector(viewWillLayoutSubviews) withOptions:0 usingBlock:^{
-            NSLog(@"Controller is layouting!");
-        } error:NULL];
-    }
-
+  [AspectsViewController aspect_hookSelector:@selector(viewDidLoad) withOptions:AspectPositionBefore usingBlock:^ {
+    NSLog(@"viewDidLoad before");
+  }error:nil];
+  [AspectsViewController aspect_hookSelector:@selector(viewWillAppear:) withOptions:AspectPositionAfter usingBlock:^(id<AspectInfo> aspectInfo,BOOL animated) {
+    NSLog(@"viewWillAppear After");
+  }error:nil];
+  [AspectsViewController aspect_hookSelector:@selector(viewDidAppear:) withOptions:AspectPositionInstead usingBlock:^(id<AspectInfo> aspectInfo,BOOL animated) {
+    NSLog(@"viewDidAppear Instead");
+  }error:nil];
     return YES;
 }
 

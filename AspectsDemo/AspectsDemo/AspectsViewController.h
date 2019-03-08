@@ -10,6 +10,5 @@
 
 @interface AspectsViewController : UIViewController
 
-- (IBAction)buttonPressed:(id)sender;
 
 @end
