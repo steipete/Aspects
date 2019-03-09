@@ -10,6 +10,19 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 
+@implementation AspectManager
+
++ (instancetype)shareManager {
+    static AspectManager *shareManager;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        shareManager = [[AspectManager alloc] init];
+    });
+    return shareManager;
+}
+
+@end
+
 #define AspectLog(...)
 //#define AspectLog(...) do { NSLog(__VA_ARGS__); }while(0)
 #define AspectLogError(...) do { NSLog(__VA_ARGS__); }while(0)
@@ -474,6 +487,22 @@ for (AspectIdentifier *aspect in aspects) {\
 static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL selector, NSInvocation *invocation) {
     NSCParameterAssert(self);
     NSCParameterAssert(invocation);
+    /*
+     The aspects framework hook firstly and later other aop framework hook a same method, which will cause crash.
+     */
+    NSString *selectorStr = NSStringFromSelector(invocation.selector);
+    if ([AspectManager shareManager].messagePrefixArray.count > 0) {
+        [[AspectManager shareManager].messagePrefixArray enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            if ([selectorStr hasPrefix:obj]) {
+                NSString *cstr =
+                [selectorStr stringByReplacingCharactersInRange:NSMakeRange(0, obj.length)
+                                                     withString:@""];
+                invocation.selector = NSSelectorFromString(cstr);
+                *stop = YES;
+            }
+        }];
+    }
+    
     SEL originalSelector = invocation.selector;
 	SEL aliasSelector = aspect_aliasForSelector(invocation.selector);
     invocation.selector = aliasSelector;
