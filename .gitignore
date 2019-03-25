@@ -8,3 +8,6 @@
 
 .DS_Store
 xcuserdata
+
+# Carthage
+Carthage/Build
