@@ -72,7 +72,7 @@ typedef struct _AspectBlock {
 @property (nonatomic, strong) NSMutableSet *selectorNames;
 @property (nonatomic, strong) NSMutableDictionary *selectorNamesToSubclassTrackers;
 - (void)addSubclassTracker:(AspectTracker *)subclassTracker hookingSelectorName:(NSString *)selectorName;
-- (void)removeSubclassTracker:(AspectTracker *)subclassTracker hookingSelectorName:(NSString *)selectorName;
+- (BOOL)removeSubclassTracker:(AspectTracker *)subclassTracker hookingSelectorName:(NSString *)selectorName;
 - (BOOL)subclassHasHookedSelectorName:(NSString *)selectorName;
 - (NSSet *)subclassTrackersHookingSelectorName:(NSString *)selectorName;
 @end
@@ -657,11 +657,13 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
     do {
         AspectTracker *tracker = swizzledClassesDict[currentClass];
         if (subclassTracker) {
-            [tracker removeSubclassTracker:subclassTracker hookingSelectorName:selectorName];
+            BOOL empty = [tracker removeSubclassTracker:subclassTracker hookingSelectorName:selectorName];
+            if (!empty)
+                break;
         } else {
             [tracker.selectorNames removeObject:selectorName];
         }
-        if (tracker.selectorNames.count == 0 && tracker.selectorNamesToSubclassTrackers) {
+        if (tracker.selectorNames.count == 0 && tracker.selectorNamesToSubclassTrackers.count == 0) {
             [swizzledClassesDict removeObjectForKey:currentClass];
         }
         subclassTracker = tracker;
@@ -693,12 +695,13 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
     }
     [trackerSet addObject:subclassTracker];
 }
-- (void)removeSubclassTracker:(AspectTracker *)subclassTracker hookingSelectorName:(NSString *)selectorName {
+- (BOOL)removeSubclassTracker:(AspectTracker *)subclassTracker hookingSelectorName:(NSString *)selectorName {
     NSMutableSet *trackerSet = self.selectorNamesToSubclassTrackers[selectorName];
     [trackerSet removeObject:subclassTracker];
     if (trackerSet.count == 0) {
         [self.selectorNamesToSubclassTrackers removeObjectForKey:selectorName];
     }
+    return trackerSet.count == 0;
 }
 - (NSSet *)subclassTrackersHookingSelectorName:(NSString *)selectorName {
     NSMutableSet *hookingSubclassTrackers = [NSMutableSet new];
