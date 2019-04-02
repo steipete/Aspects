@@ -81,7 +81,7 @@ typedef struct _AspectBlock {
 - (NSArray *)aspects_arguments;
 @end
 
-#define AspectPositionFilter 0x07
+#define AspectPositionFilter 0xc
 
 #define AspectError(errorCode, errorDescription) do { \
 AspectLogError(@"Aspects: %@", errorDescription); \
@@ -465,7 +465,7 @@ static void aspect_undoSwizzleClassInPlace(Class klass) {
 #define aspect_invoke(aspects, info) \
 for (AspectIdentifier *aspect in aspects) {\
     [aspect invokeWithInfo:info];\
-    if (aspect.options & AspectOptionAutomaticRemoval) { \
+    if (aspect.options >= AspectOptionAutomaticRemoval) { \
         aspectsToRemove = [aspectsToRemove?:@[] arrayByAddingObject:aspect]; \
     } \
 }
@@ -581,7 +581,13 @@ static BOOL aspect_isSelectorAllowedAndTrack(NSObject *self, SEL selector, Aspec
     }
 
     // Additional checks.
-    AspectOptions position = options&AspectPositionFilter;
+    if (options > AspectPositionFilter) {
+        NSString *errorDesc = @"AspectOptions max value is AspectPositionBefore | AspectOptionAutomaticRemoval";
+        AspectError(AspectErrorOptionsValue, errorDesc);
+        return NO;
+    }
+
+    AspectOptions position = options % AspectOptionAutomaticRemoval;
     if ([selectorName isEqualToString:@"dealloc"] && position != AspectPositionBefore) {
         NSString *errorDesc = @"AspectPositionBefore is the only valid position when hooking dealloc.";
         AspectError(AspectErrorSelectorDeallocPosition, errorDesc);
@@ -887,11 +893,19 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
 
 - (void)addAspect:(AspectIdentifier *)aspect withOptions:(AspectOptions)options {
     NSParameterAssert(aspect);
-    NSUInteger position = options&AspectPositionFilter;
+    NSUInteger position = options % AspectOptionAutomaticRemoval;
+
     switch (position) {
-        case AspectPositionBefore:  self.beforeAspects  = [(self.beforeAspects ?:@[]) arrayByAddingObject:aspect]; break;
-        case AspectPositionInstead: self.insteadAspects = [(self.insteadAspects?:@[]) arrayByAddingObject:aspect]; break;
-        case AspectPositionAfter:   self.afterAspects   = [(self.afterAspects  ?:@[]) arrayByAddingObject:aspect]; break;
+        case AspectPositionBefore:
+            self.beforeAspects  = [(self.beforeAspects ?:@[]) arrayByAddingObject:aspect];
+            break;
+        case AspectPositionInstead:
+            self.insteadAspects = [(self.insteadAspects?:@[]) arrayByAddingObject:aspect];
+            break;
+        case AspectPositionAfter:
+        case 0:// AspectOptionAutomaticRemoval
+            self.afterAspects   = [(self.afterAspects  ?:@[]) arrayByAddingObject:aspect];
+            break;
     }
 }
 
