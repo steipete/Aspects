@@ -65,6 +65,13 @@ typedef NS_OPTIONS(NSUInteger, AspectOptions) {
                             usingBlock:(id)block
                                  error:(NSError **)error;
 
+//the option selector is not implemented, will add empty method
+- (id<AspectToken>)aspect_hookProtocol:(Protocol *)protocol
+                      optionalSelector:(SEL)selector
+                           withOptions:(AspectOptions)options
+                            usingBlock:(id)block
+                                 error:(NSError **)error;
+
 @end
 
 

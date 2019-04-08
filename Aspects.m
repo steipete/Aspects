@@ -111,6 +111,38 @@ static NSString *const AspectsMessagePrefix = @"aspects_";
     return aspect_add(self, selector, options, block, error);
 }
 
+- (id<AspectToken>)aspect_hookProtocol:(Protocol *)protocol
+                      optionalSelector:(SEL)selector
+                           withOptions:(AspectOptions)options
+                            usingBlock:(id)block
+                                 error:(NSError **)error {
+    // how to check selector is optional method in protocol?
+    struct objc_method_description method_description = protocol_getMethodDescription(protocol, selector, NO, YES);
+    return [self aspect_addAndHookSelector:selector withOptions:options usingBlock:block typeEncoding:method_description.types error:error];
+}
+
+- (id<AspectToken>)aspect_addAndHookSelector:(SEL)selector
+                                 withOptions:(AspectOptions)options
+                                  usingBlock:(id)block
+                                typeEncoding:(const char*)typeEncoding
+                                       error:(NSError **)error {
+    NSCParameterAssert(typeEncoding);
+    aspect_performLocked(^{
+        if (![self respondsToSelector:selector]) {
+            IMP imp = imp_implementationWithBlock(^(id self, ...) {
+            });
+            class_addMethod(self.class, selector, imp, typeEncoding);
+            Class klass = aspect_hookClass(self, error);
+            Method targetMethod = class_getInstanceMethod(klass, selector);
+            if (targetMethod == NULL) {
+                // if self have been hooked, the method should add in swizzle class
+                class_addMethod(klass, selector, imp, typeEncoding);
+            }
+        }
+    });
+    return aspect_add(self, selector, options, block, error);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Private Helper
 
