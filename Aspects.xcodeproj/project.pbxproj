@@ -12,7 +12,8 @@
 		34B986A51B1E491000DE719D /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 34B986841B1DE2BE00DE719D /* Aspects.m */; };
 		34B986A61B1E491300DE719D /* Aspects.h in Headers */ = {isa = PBXBuildFile; fileRef = 34B9866C1B1DE0CE00DE719D /* Aspects.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7376F8CD1B8EA767009CAB74 /* Aspects.h in Headers */ = {isa = PBXBuildFile; fileRef = 34B9866C1B1DE0CE00DE719D /* Aspects.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		7376F8D61B8EB1FA009CAB74 /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 34B986841B1DE2BE00DE719D /* Aspects.m */; settings = {ASSET_TAGS = (); }; };
+		7376F8D61B8EB1FA009CAB74 /* Aspects.m in Sources */ = {isa = PBXBuildFile; fileRef = 34B986841B1DE2BE00DE719D /* Aspects.m */; };
+		9CDB17402293EF0A00FAC8D5 /* AspectsSwift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CDB173F2293EF0A00FAC8D5 /* AspectsSwift.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +24,7 @@
 		34B9868C1B1E48CD00DE719D /* Aspects.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Aspects.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7376F8C31B8EA670009CAB74 /* Aspects.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Aspects.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7376F8C71B8EA670009CAB74 /* Info-watch.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-watch.plist"; sourceTree = "<group>"; };
+		9CDB173F2293EF0A00FAC8D5 /* AspectsSwift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AspectsSwift.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -73,6 +75,7 @@
 			children = (
 				34B9866C1B1DE0CE00DE719D /* Aspects.h */,
 				34B986841B1DE2BE00DE719D /* Aspects.m */,
+				9CDB173F2293EF0A00FAC8D5 /* AspectsSwift.swift */,
 				34B9866A1B1DE0CE00DE719D /* Supporting Files */,
 			);
 			name = Aspects;
@@ -182,6 +185,7 @@
 				TargetAttributes = {
 					34B986661B1DE0CE00DE719D = {
 						CreatedOnToolsVersion = 6.3.1;
+						LastSwiftMigration = 1000;
 					};
 					34B9868B1B1E48CD00DE719D = {
 						CreatedOnToolsVersion = 6.3.1;
@@ -240,6 +244,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				34B986851B1DE2BE00DE719D /* Aspects.m in Sources */,
+				9CDB17402293EF0A00FAC8D5 /* AspectsSwift.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -353,6 +358,7 @@
 		34B9867E1B1DE0CE00DE719D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -362,12 +368,15 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_NAME = Aspects;
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 4.2;
 			};
 			name = Debug;
 		};
 		34B9867F1B1DE0CE00DE719D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -377,6 +386,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_NAME = Aspects;
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 4.2;
 			};
 			name = Release;
 		};
