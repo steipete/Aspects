@@ -10,7 +10,11 @@ import Foundation
 
 public extension NSObject {
 
-    func aspect_hook(selector: Selector, options: AspectOptions, usingBlock: @escaping(AspectInfo) -> Void) throws {
+    func aspect_hook(
+        selector: Selector,
+        options: AspectOptions,
+        usingBlock: @escaping(AspectInfo) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             usingBlock(aspectInfo)
         }
@@ -23,7 +27,11 @@ public extension NSObject {
         }
     }
 
-    func aspect_hook<Arg1>(selector: Selector, options: AspectOptions, usingBlock: @escaping(AspectInfo, Arg1) -> Void) throws {
+    func aspect_hook<Arg1>(
+        selector: Selector,
+        options: AspectOptions,
+        usingBlock: @escaping(AspectInfo, Arg1) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments()?.count == 1,
                 let arg1 = aspectInfo.arguments()[0] as? Arg1 else { return }
@@ -38,9 +46,11 @@ public extension NSObject {
         }
     }
 
-    func aspect_hook<Arg1, Arg2>(selector: Selector,
-                                 options: AspectOptions,
-                                 usingBlock: @escaping(AspectInfo, Arg1, Arg2) -> Void) throws {
+    func aspect_hook<Arg1, Arg2>(
+        selector: Selector,
+        options: AspectOptions,
+        usingBlock: @escaping(AspectInfo, Arg1, Arg2) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments()?.count == 2,
                 let arg1 = aspectInfo.arguments()[0] as? Arg1,
@@ -56,10 +66,11 @@ public extension NSObject {
         }
     }
 
-    func aspect_hook<Arg1, Arg2, Arg3>
-        (selector: Selector,
-         options: AspectOptions,
-         usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3) -> Void) throws {
+    func aspect_hook<Arg1, Arg2, Arg3>(
+        selector: Selector,
+        options: AspectOptions,
+        usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments()?.count == 3,
                 let arg1 = aspectInfo.arguments()[0] as? Arg1,
@@ -79,7 +90,8 @@ public extension NSObject {
     func aspect_hook<Arg1, Arg2, Arg3, Arg4>(
         selector: Selector,
         options: AspectOptions,
-        usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4) -> Void) throws {
+        usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments()?.count == 4,
                 let arg1 = aspectInfo.arguments()[0] as? Arg1,
@@ -97,10 +109,11 @@ public extension NSObject {
         }
     }
 
-    func aspect_hook<Arg1, Arg2, Arg3, Arg4, Arg5>
-        (selector: Selector,
-         options: AspectOptions,
-         usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5) -> Void) throws {
+    func aspect_hook<Arg1, Arg2, Arg3, Arg4, Arg5>(
+        selector: Selector,
+        options: AspectOptions,
+        usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments()?.count == 5,
                 let arg1 = aspectInfo.arguments()[0] as? Arg1,
@@ -121,10 +134,11 @@ public extension NSObject {
         }
     }
 
-    func aspect_hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6>
-        (selector: Selector,
-         options: AspectOptions,
-         usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6) -> Void) throws {
+    func aspect_hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6>(
+        selector: Selector,
+        options: AspectOptions,
+        usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments()?.count == 6,
                 let arg1 = aspectInfo.arguments()[0] as? Arg1,
@@ -147,10 +161,11 @@ public extension NSObject {
     }
 
 
-    func aspect_hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7>
-        (selector: Selector,
-         options: AspectOptions,
-         usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7) -> Void) throws {
+    func aspect_hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7>(
+        selector: Selector,
+        options: AspectOptions,
+        usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments()?.count == 7,
                 let arg1 = aspectInfo.arguments()[0] as? Arg1,
@@ -176,7 +191,11 @@ public extension NSObject {
 
 public extension NSObject {
 
-    class func aspect_hook(selector: Selector, options: AspectOptions, usingBlock: @escaping(AspectInfo) -> Void) throws {
+    class func aspect_hook(
+        selector: Selector,
+        options: AspectOptions,
+        usingBlock: @escaping(AspectInfo) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             usingBlock(aspectInfo)
         }
@@ -189,7 +208,11 @@ public extension NSObject {
         }
     }
 
-    class func aspect_hook<Arg1>(selector: Selector, options: AspectOptions, usingBlock: @escaping(AspectInfo, Arg1) -> Void) throws {
+    class func aspect_hook<Arg1>(
+        selector: Selector,
+        options: AspectOptions,
+        usingBlock: @escaping(AspectInfo, Arg1) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments()?.count == 1,
                 let arg1 = aspectInfo.arguments()[0] as? Arg1 else { return }
@@ -204,9 +227,11 @@ public extension NSObject {
         }
     }
 
-    class func aspect_hook<Arg1, Arg2>(selector: Selector,
-                                 options: AspectOptions,
-                                 usingBlock: @escaping(AspectInfo, Arg1, Arg2) -> Void) throws {
+    class func aspect_hook<Arg1, Arg2>(
+        selector: Selector,
+        options: AspectOptions,
+        usingBlock: @escaping(AspectInfo, Arg1, Arg2) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments()?.count == 2,
                 let arg1 = aspectInfo.arguments()[0] as? Arg1,
@@ -222,10 +247,11 @@ public extension NSObject {
         }
     }
 
-    class func aspect_hook<Arg1, Arg2, Arg3>
-        (selector: Selector,
-         options: AspectOptions,
-         usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3) -> Void) throws {
+    class func aspect_hook<Arg1, Arg2, Arg3>(
+        selector: Selector,
+        options: AspectOptions,
+        usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments()?.count == 3,
                 let arg1 = aspectInfo.arguments()[0] as? Arg1,
@@ -245,7 +271,8 @@ public extension NSObject {
     class func aspect_hook<Arg1, Arg2, Arg3, Arg4>(
         selector: Selector,
         options: AspectOptions,
-        usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4) -> Void) throws {
+        usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments()?.count == 4,
                 let arg1 = aspectInfo.arguments()[0] as? Arg1,
@@ -263,10 +290,11 @@ public extension NSObject {
         }
     }
 
-    class func aspect_hook<Arg1, Arg2, Arg3, Arg4, Arg5>
-        (selector: Selector,
-         options: AspectOptions,
-         usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5) -> Void) throws {
+    class func aspect_hook<Arg1, Arg2, Arg3, Arg4, Arg5>(
+        selector: Selector,
+        options: AspectOptions,
+        usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments()?.count == 5,
                 let arg1 = aspectInfo.arguments()[0] as? Arg1,
@@ -287,10 +315,11 @@ public extension NSObject {
         }
     }
 
-    class func aspect_hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6>
-        (selector: Selector,
-         options: AspectOptions,
-         usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6) -> Void) throws {
+    class func aspect_hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6>(
+        selector: Selector,
+        options: AspectOptions,
+        usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments()?.count == 6,
                 let arg1 = aspectInfo.arguments()[0] as? Arg1,
@@ -312,10 +341,11 @@ public extension NSObject {
         }
     }
 
-    class func aspect_hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7>
-        (selector: Selector,
-         options: AspectOptions,
-         usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7) -> Void) throws {
+    class func aspect_hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7>(
+        selector: Selector,
+        options: AspectOptions,
+        usingBlock: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7) -> Void) throws
+    {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments()?.count == 7,
                 let arg1 = aspectInfo.arguments()[0] as? Arg1,
