@@ -54,7 +54,7 @@ Aspect-oriented programming (AOP) is used to encapsulate "cross-cutting" concern
 
 If we implemented the above requirements using regular OOP there'd be some drawbacks: 
 
-Good OOP says a class should have a single responsibility, however adding on extra *cross-cutting* requirements means a class that is taking on other responsibilites. For example you might have a **StoreClient** that is supposed to be all about making purchases from an online store. Add in some cross-cutting requirements and it might also have to take on the roles of logging, security and recommendations. This is not great because: 
+Good OOP says a class should have a single responsibility, however adding on extra *cross-cutting* requirements means a class that is taking on other responsibilities. For example you might have a **StoreClient** that is supposed to be all about making purchases from an online store. Add in some cross-cutting requirements and it might also have to take on the roles of logging, security and recommendations. This is not great because: 
 
 * Our StoreClient is now harder to understand and maintain.
 * These cross-cutting requirements are duplicated and spread throughout our app. 
