@@ -7,6 +7,7 @@
 
 #import "Aspects.h"
 #import <libkern/OSAtomic.h>
+#import <os/lock.h>
 #import <objc/runtime.h>
 #import <objc/message.h>
 
@@ -159,10 +160,15 @@ static BOOL aspect_remove(AspectIdentifier *aspect, NSError **error) {
 }
 
 static void aspect_performLocked(dispatch_block_t block) {
-    static OSSpinLock aspect_lock = OS_SPINLOCK_INIT;
-    OSSpinLockLock(&aspect_lock);
+    os_unfair_lock_t aspect_lock = &(OS_UNFAIR_LOCK_INIT);
+    os_unfair_lock_lock(aspect_lock);
     block();
-    OSSpinLockUnlock(&aspect_lock);
+    os_unfair_lock_unlock(aspect_lock);
+    /*
+     static OSSpinLock aspect_lock = OS_SPINLOCK_INIT;
+     OSSpinLockLock(&aspect_lock);
+     block();
+     OSSpinLockUnlock(&aspect_lock);*/
 }
 
 static SEL aspect_aliasForSelector(SEL selector) {
@@ -269,9 +275,12 @@ static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
 
 static void aspect_prepareClassAndHookSelector(NSObject *self, SEL selector, NSError **error) {
     NSCParameterAssert(selector);
+    //以下是为了把转发调用的函数给交换掉
     Class klass = aspect_hookClass(self, error);
     Method targetMethod = class_getInstanceMethod(klass, selector);
     IMP targetMethodIMP = method_getImplementation(targetMethod);
+    
+    //此处说明类或者是对象是有该方法的。然后将方法的实现替换为转发调用（_objc_msgForward）,而这个函数已经被替换为,__ASPECTS_ARE_BEING_CALLED__,故而最终的调用以及options的解析之行是在这里进行的
     if (!aspect_isMsgForwardIMP(targetMethodIMP)) {
         // Make a method alias for the existing method implementation, it not already copied.
         const char *typeEncoding = method_getTypeEncoding(targetMethod);
