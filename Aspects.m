@@ -275,9 +275,12 @@ static IMP aspect_getMsgForwardIMP(NSObject *self, SEL selector) {
 
 static void aspect_prepareClassAndHookSelector(NSObject *self, SEL selector, NSError **error) {
     NSCParameterAssert(selector);
+    //以下是为了把转发调用的函数给交换掉
     Class klass = aspect_hookClass(self, error);
     Method targetMethod = class_getInstanceMethod(klass, selector);
     IMP targetMethodIMP = method_getImplementation(targetMethod);
+    
+    //此处说明类或者是对象是有该方法的。然后将方法的实现替换为转发调用（_objc_msgForward）,而这个函数已经被替换为,__ASPECTS_ARE_BEING_CALLED__,故而最终的调用以及options的解析之行是在这里进行的
     if (!aspect_isMsgForwardIMP(targetMethodIMP)) {
         // Make a method alias for the existing method implementation, it not already copied.
         const char *typeEncoding = method_getTypeEncoding(targetMethod);
