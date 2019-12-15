@@ -45,7 +45,7 @@ typedef struct _AspectBlock {
 @end
 
 // Tracks a single aspect.
-@interface AspectIdentifier : NSObject
+@interface AspectIdentifier : NSObject <AspectToken>
 + (instancetype)identifierWithSelector:(SEL)selector object:(id)object options:(AspectOptions)options block:(id)block error:(NSError **)error;
 - (BOOL)invokeWithInfo:(id<AspectInfo>)info;
 @property (nonatomic, assign) SEL selector;
