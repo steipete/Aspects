@@ -164,7 +164,7 @@ static void aspect_performLocked(dispatch_block_t block) {
     OSSpinLockLock(&aspect_lock);
     block();
     OSSpinLockUnlock(&aspect_lock);*/
-    os_unfair_lock_t ascpect_lock = OS_UNFAIR_LOCK_INIT;
+    os_unfair_lock_t ascpect_lock = &(OS_UNFAIR_LOCK_INIT);
     os_unfair_lock_lock(ascpect_lock);
     block();
     os_unfair_lock_unlock(ascpect_lock);
