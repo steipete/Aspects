@@ -6,6 +6,7 @@
 //
 
 #import "Aspects.h"
+#import <os/lock.h>
 #import <libkern/OSAtomic.h>
 #import <objc/runtime.h>
 #import <objc/message.h>
@@ -159,10 +160,15 @@ static BOOL aspect_remove(AspectIdentifier *aspect, NSError **error) {
 }
 
 static void aspect_performLocked(dispatch_block_t block) {
-    static OSSpinLock aspect_lock = OS_SPINLOCK_INIT;
+    /*static OSSpinLock aspect_lock = OS_SPINLOCK_INIT;
     OSSpinLockLock(&aspect_lock);
     block();
-    OSSpinLockUnlock(&aspect_lock);
+    OSSpinLockUnlock(&aspect_lock);*/
+    os_unfair_lock_t ascpect_lock = &(OS_UNFAIR_LOCK_INIT);
+    os_unfair_lock_lock(ascpect_lock);
+    block();
+    os_unfair_lock_unlock(ascpect_lock);
+    
 }
 
 static SEL aspect_aliasForSelector(SEL selector) {
