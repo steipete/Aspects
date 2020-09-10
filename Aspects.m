@@ -715,7 +715,7 @@ static void aspect_deregisterTrackedSelector(id self, SEL selector) {
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %@, trackedClass: %@, selectorNames:%@, subclass selector names: %@>", self.class, self, NSStringFromClass(self.trackedClass), self.selectorNames, self.selectorNamesToSubclassTrackers.allKeys];
+    return [NSString stringWithFormat:@"<%@: %p, trackedClass: %@, selectorNames:%@, subclass selector names: %@>", self.class, self, NSStringFromClass(self.trackedClass), self.selectorNames, self.selectorNamesToSubclassTrackers.allKeys];
 }
 
 @end
