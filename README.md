@@ -1,4 +1,4 @@
-Aspects v1.4.2 🪝 [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects) [![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
+Aspects v1.4.2 🪝 - AOP for Objective-C (10k+ stars) [![Build Status](https://travis-ci.org/steipete/Aspects.svg?branch=master)](https://travis-ci.org/steipete/Aspects) [![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
 ==============
 
 A delightful, simple library for aspect oriented programming by [@steipete](http://twitter.com/steipete).
