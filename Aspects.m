@@ -279,6 +279,13 @@ static void aspect_prepareClassAndHookSelector(NSObject *self, SEL selector, NSE
         if (![klass instancesRespondToSelector:aliasSelector]) {
             __unused BOOL addedAlias = class_addMethod(klass, aliasSelector, method_getImplementation(targetMethod), typeEncoding);
             NSCAssert(addedAlias, @"Original implementation for %@ is already copied to %@ on %@", NSStringFromSelector(selector), NSStringFromSelector(aliasSelector), klass);
+        } else {
+            // update exist alias method
+            Method aliasMethod = class_getInstanceMethod(klass, aliasSelector);
+            IMP aliasMethodIMP = method_getImplementation(aliasMethod);
+            if (aliasMethodIMP != targetMethodIMP) {
+                class_replaceMethod(klass, aliasSelector, targetMethodIMP, typeEncoding);
+            }
         }
 
         // We use forwardInvocation to hook in.
@@ -458,6 +465,79 @@ static void aspect_undoSwizzleClassInPlace(Class klass) {
     });
 }
 
+static BOOL aspect_invokeAlias(NSInvocation *invocation, SEL originalSelector)
+{
+    BOOL respondsToAlias = YES;
+    Class klass = object_getClass(invocation.target);
+    SEL aliasSelector = invocation.selector;
+    
+    do {
+        if ((respondsToAlias = [klass instancesRespondToSelector:aliasSelector])) {
+            // invoke alias method
+            Method aliasInvocationMethod = class_getInstanceMethod(klass, aliasSelector);
+            IMP aliasInvocation = method_getImplementation(aliasInvocationMethod);
+            
+            const char *typeEncoding = method_getTypeEncoding(aliasInvocationMethod);
+            IMP msgForwardInvocation = class_replaceMethod(klass, originalSelector, aliasInvocation, typeEncoding);
+            
+            invocation.selector = originalSelector;
+            [invocation invoke];
+            
+            class_replaceMethod(klass, originalSelector, msgForwardInvocation, typeEncoding);
+            invocation.selector = aliasSelector;
+            break;
+        }
+    }while (!respondsToAlias && (klass = class_getSuperclass(klass)));
+    
+    return respondsToAlias;
+}
+
+static BOOL aspect_invokeOriginalForwarder(__unsafe_unretained NSObject *self, NSInvocation *invocation)
+{
+    SEL forwardInvocationSEL = @selector(forwardInvocation:);
+    SEL originalForwardInvocationSEL = NSSelectorFromString(AspectsForwardInvocationSelectorName);
+    
+    // grab original ForwardInvocation saved previously
+    BOOL respondsToParent = [self respondsToSelector:originalForwardInvocationSEL];
+    
+    // trying to find implementation on parent(s)
+    if (! respondsToParent) {
+        Method dummyObjectMethod = class_getInstanceMethod(NSObject.class, forwardInvocationSEL);
+        IMP dummyImplementation = method_getImplementation(dummyObjectMethod);
+        
+        Class klass = object_getClass(invocation.target);
+        
+        BOOL aspectsFound = NO;
+        
+        do {
+            if ([klass instancesRespondToSelector:forwardInvocationSEL]) {
+                // skip Aspects' forwardInvocation method(s)
+                Method parentInvocationMethod = class_getInstanceMethod(klass, forwardInvocationSEL);
+                IMP parentForwarder = method_getImplementation(parentInvocationMethod);
+                
+                // skip until found the aspectForwarder
+                if (aspectsFound) {
+                    if (dummyImplementation != parentForwarder) {
+                        // setup forwarder
+                        const char *typeEncoding = method_getTypeEncoding(parentInvocationMethod);
+                        class_replaceMethod(klass, originalForwardInvocationSEL, parentForwarder, typeEncoding);
+                        respondsToParent = YES;
+                        break;
+                    }
+                }else {
+                    aspectsFound = ((IMP)__ASPECTS_ARE_BEING_CALLED__ == parentForwarder);
+                }
+            }
+        }while ((klass = class_getSuperclass(klass)));
+    }
+    
+    // ... then call it
+    if (respondsToParent) {
+        ((void( *)(id, SEL, NSInvocation *))objc_msgSend)(self, originalForwardInvocationSEL, invocation);
+    }
+    return respondsToParent;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Aspect Invoke Point
 
@@ -492,28 +572,21 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
         aspect_invoke(classContainer.insteadAspects, info);
         aspect_invoke(objectContainer.insteadAspects, info);
     }else {
-        Class klass = object_getClass(invocation.target);
-        do {
-            if ((respondsToAlias = [klass instancesRespondToSelector:aliasSelector])) {
-                [invocation invoke];
-                break;
-            }
-        }while (!respondsToAlias && (klass = class_getSuperclass(klass)));
+        respondsToAlias = aspect_invokeAlias(invocation, originalSelector);
+        // If no hooks are installed, try to call original implementation (usually to throw an exception)
+        if (!respondsToAlias) {
+            invocation.selector = originalSelector;
+            respondsToAlias = aspect_invokeOriginalForwarder(self, invocation);
+        }
     }
 
     // After hooks.
     aspect_invoke(classContainer.afterAspects, info);
     aspect_invoke(objectContainer.afterAspects, info);
 
-    // If no hooks are installed, call original implementation (usually to throw an exception)
     if (!respondsToAlias) {
-        invocation.selector = originalSelector;
-        SEL originalForwardInvocationSEL = NSSelectorFromString(AspectsForwardInvocationSelectorName);
-        if ([self respondsToSelector:originalForwardInvocationSEL]) {
-            ((void( *)(id, SEL, NSInvocation *))objc_msgSend)(self, originalForwardInvocationSEL, invocation);
-        }else {
-            [self doesNotRecognizeSelector:invocation.selector];
-        }
+        // Throw an exception
+        [self doesNotRecognizeSelector:invocation.selector];
     }
 
     // Remove any hooks that are queued for deregistration.

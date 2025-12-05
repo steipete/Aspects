@@ -12,7 +12,6 @@
 
 @interface TestClass : NSObject
 @property (nonatomic, copy) NSString *string;
-@property (nonatomic, assign) BOOL kvoTestCalled;
 - (void)testCall;
 - (void)testCallAndExecuteBlock:(dispatch_block_t)block;
 - (double)callReturnsDouble;
@@ -551,10 +550,37 @@
     XCTAssertFalse([aspectToken remove], @"Must not able to deregister again");
 }
 
+@end
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Test KVO
 
+@protocol TestKVOClassProtocol <NSObject>
+@property (nonatomic, assign) BOOL kvoTestCalled;
+@end
+
+#define TestKVOClass(suffix) \
+    Test##suffix
+
+#define declareTestKVOClass(suffix) \
+    @interface TestKVOClass(suffix) : NSObject <TestKVOClassProtocol> \
+    @property (nonatomic, copy) NSString *string; \
+    @property (nonatomic, assign) BOOL kvoTestCalled; \
+    @end \
+    @implementation TestKVOClass(suffix) @end
+
+declareTestKVOClass(InstanceHookThenKVO)
+declareTestKVOClass(KVOThenInstanceHook)
+declareTestKVOClass(ClassHookThenKVO)
+declareTestKVOClass(KVOThenClassHook)
+
+@interface AspectsKVOTests : XCTestCase @end
+@implementation AspectsKVOTests
+
 - (void)testKVOCoexistance {
+#pragma push_macro( "TestClass" )
+#define TestClass TestKVOClass(InstanceHookThenKVO)
+    
     TestClass *testClass = [TestClass new];
 
     __block BOOL hookCalled = NO;
@@ -576,37 +602,140 @@
     XCTAssertFalse(testClass.kvoTestCalled, @"KVO must no longer work");
 
     XCTAssertTrue([aspectToken remove], @"Must be able to deregister");
+    
+#pragma pop_macro( "TestClass" )
 }
 
-// TODO: Pre-registeded KVO is currently not working.
-//- (void)testKVOCoexistanceWithPreregisteredKVO {
-//    TestClass *testClass = [TestClass new];
-//    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must be not set");
-//    [testClass addObserver:self forKeyPath:NSStringFromSelector(@selector(string)) options:0 context:_cmd];
-//    testClass.string = @"test";
-//    XCTAssertTrue(testClass.kvoTestCalled, @"KVO must work");
-//
-//    __block BOOL hookCalled = NO;
-//    [testClass aspect_hookSelector:@selector(setString:) withOptions:AspectPositionAfter usingBlock:^(id instance, NSArray *arguments) {
-//        NSLog(@"Aspect hook!");
-//        hookCalled = YES;
-//    }];
-//
-//    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must be not set");
-//    testClass.string = @"test";
-//    XCTAssertTrue(hookCalled, @"Hook must be called");
-//    XCTAssertTrue(testClass.kvoTestCalled, @"KVO must work");
-//    [testClass removeObserver:self forKeyPath:NSStringFromSelector(@selector(string)) context:_cmd];
-//    hookCalled = NO;
-//    testClass.kvoTestCalled = NO;
-//    testClass.string = @"test2";
-//    XCTAssertTrue(hookCalled, @"Hook must be called");
-//    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must no longer work");
-//}
+// Pre-registeded KVO
+- (void)testKVOCoexistanceWithPreregisteredKVO {
+#pragma push_macro( "TestClass" )
+#define TestClass TestKVOClass(KVOThenInstanceHook)
+    
+    TestClass *testClass = [TestClass new];
+    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must be not set");
+    
+    // Step 1: kvo dynamic-subclassing
+    [testClass addObserver:self forKeyPath:NSStringFromSelector(@selector(string)) options:0 context:_cmd];
+    [testClass addObserver:self forKeyPath:NSStringFromSelector(@selector(kvoTestCalled)) options:0 context:_cmd];
+    
+    // Step 2: kvo validation
+    testClass.string = @"test";
+    XCTAssertTrue(testClass.kvoTestCalled, @"KVO must work");
+    
+    // Step 3: Instance-hooking
+    __block BOOL hookCalled = NO;
+    id aspectToken = [testClass aspect_hookSelector:@selector(setString:) withOptions:AspectPositionBefore usingBlock:^(id instance, NSArray *arguments) {
+        NSLog(@"Aspect hook!");
+        hookCalled = YES;
+    } error:nil];
+    
+    // Step 4: call w/ Observer
+    testClass.kvoTestCalled = NO;
+    testClass.string = @"test";
+    XCTAssertTrue(hookCalled, @"Hook must be called");
+    XCTAssertTrue(testClass.kvoTestCalled, @"KVO must work");
+    
+    // Step 5: call w/o Observer
+    [testClass removeObserver:self forKeyPath:NSStringFromSelector(@selector(string)) context:_cmd];
+    hookCalled = NO;
+    testClass.kvoTestCalled = NO;
+    testClass.string = @"test2";
+    XCTAssertTrue(hookCalled, @"Hook must be called");
+    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must no longer work");
+    
+    // Step 6: aspect restore
+    XCTAssertTrue([aspectToken remove], @"Must be able to deregister");
+    
+    // Step 7: KVO isa-swizzing restored
+    [testClass removeObserver:self forKeyPath:NSStringFromSelector(@selector(kvoTestCalled)) context:_cmd];
+    hookCalled = NO;
+    testClass.kvoTestCalled = NO;
+    XCTAssertFalse(hookCalled, @"Hook must be not called");
+    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must no longer work");
+    
+#pragma pop_macro( "TestClass" )
+}
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-    NSLog(@"KVO!");
-    ((TestClass *)object).kvoTestCalled = YES;
+#pragma mark - Test KVO with class hook
+- (void)testKVOClassHookCoexistence {
+#pragma push_macro( "TestClass" )
+#define TestClass TestKVOClass(ClassHookThenKVO)
+    
+    // Step 1: Class-hooking
+    __block BOOL hookCalled = NO;
+    id aspectToken = [TestClass aspect_hookSelector:@selector(setString:) withOptions:AspectPositionAfter usingBlock:^(id<AspectInfo> info, NSString *string) {
+        NSLog(@"Aspect hook!");
+        hookCalled = YES;
+    } error:NULL];
+    
+    // Step 2: kvo dynamic-subclassing
+    TestClass *testClass = [TestClass new];
+    [testClass addObserver:self forKeyPath:NSStringFromSelector(@selector(string)) options:0 context:_cmd];
+    
+    // Step 3: validation
+    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must be not set");
+    
+    // Step 3.1: call w/ Observer
+    testClass.string = @"test";
+    XCTAssertTrue(hookCalled, @"Hook must be called");
+    XCTAssertTrue(testClass.kvoTestCalled, @"KVO must work");
+    
+    // Step 3.2: call w/o Observer
+    [testClass removeObserver:self forKeyPath:NSStringFromSelector(@selector(string)) context:_cmd];
+    hookCalled = NO;
+    testClass.kvoTestCalled = NO;
+    testClass.string = @"test2";
+    XCTAssertTrue(hookCalled, @"Hook must be called");
+    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must no longer work");
+    
+    XCTAssertTrue([aspectToken remove], @"Must be able to deregister");
+    
+#pragma pop_macro( "TestClass" )
+}
+
+// Pre-registeded KVO
+- (void)testKVOClassHookCoexistenceWithPreregisteredKVO {
+#pragma push_macro( "TestClass" )
+#define TestClass TestKVOClass(KVOThenClassHook)
+    
+    // Step 1: kvo dynamic-subclassing
+    TestClass *testClass = [TestClass new];
+    [testClass addObserver:self forKeyPath:NSStringFromSelector(@selector(string)) options:0 context:_cmd];
+    
+    // Step 2: Class-hooking
+    __block BOOL hookCalled = NO;
+    id aspectToken = [TestClass aspect_hookSelector:@selector(setString:) withOptions:AspectPositionAfter usingBlock:^(id<AspectInfo> info, NSString *string) {
+        NSLog(@"Aspect hook!");
+        hookCalled = YES;
+    } error:NULL];
+    
+    // Step 3: validation
+    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must be not set");
+    
+    // Step 3.1: call w/ Observer
+    testClass.string = @"test";
+    XCTAssertTrue(hookCalled, @"Hook must be called");
+    XCTAssertTrue(testClass.kvoTestCalled, @"KVO must work");
+    
+    // Step 3.2: call w/o Observer
+    [testClass removeObserver:self forKeyPath:NSStringFromSelector(@selector(string)) context:_cmd];
+    hookCalled = NO;
+    testClass.kvoTestCalled = NO;
+    testClass.string = @"test2";
+    XCTAssertTrue(hookCalled, @"Hook must be called");
+    XCTAssertFalse(testClass.kvoTestCalled, @"KVO must no longer work");
+    
+    XCTAssertTrue([aspectToken remove], @"Must be able to deregister");
+    
+#pragma pop_macro( "TestClass" )
+}
+
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id<TestKVOClassProtocol>)object change:(NSDictionary *)change context:(void *)context {
+    if (! [keyPath isEqualToString:NSStringFromSelector(@selector(kvoTestCalled))]) {
+        NSLog(@"KVO!");
+        object.kvoTestCalled = YES;
+    }
 }
 
 @end
